@@ -1,7 +1,7 @@
 <pandora>
     <!-- GLOBAL SETTINGS -->
     <IsMonitoringEnabled>true</IsMonitoringEnabled>
-    <ShouldDisplayAlgorithmInfo>false</ShouldDisplayAlgorithmInfo>
+    <ShouldDisplayAlgorithmInfo>true</ShouldDisplayAlgorithmInfo>
     <SingleHitTypeClusteringMode>true</SingleHitTypeClusteringMode>
 
     <!-- ALGORITHM SETTINGS -->
@@ -13,14 +13,15 @@
         <FilteredCaloHitListName>CaloHitList2D</FilteredCaloHitListName>
         <CurrentCaloHitListReplacement>CaloHitList2D</CurrentCaloHitListReplacement>
     </algorithm>
+<!--
     <algorithm type = "LArVisualMonitoring">
         <CaloHitListNames>CaloHitListU CaloHitListV CaloHitListW</CaloHitListNames>
         <ShowDetector>true</ShowDetector>
     </algorithm>
-
+-->
     <algorithm type = "LArMaster">
         <CRSettingsFile>PandoraSettings_Cosmic_Standard.xml</CRSettingsFile>
-        <NuSettingsFile>PandoraSettings_Neutrino_Standard.xml</NuSettingsFile>
+        <NuSettingsFile>PandoraSettings_Neutrino_MicroBooNE.xml</NuSettingsFile>
         <SlicingSettingsFile>PandoraSettings_Slicing_Standard.xml</SlicingSettingsFile>
         <StitchingTools>
             <tool type = "LArStitchingCosmicRayMerging"><ThreeDStitchingMode>true</ThreeDStitchingMode></tool>
@@ -30,7 +31,10 @@
             <tool type = "LArCosmicRayTagging"/>
         </CosmicRayTaggingTools>
         <SliceIdTools>
-            <tool type = "LArSimpleNeutrinoId"/>
+            <tool type = "LArNeutrinoId">
+                <SvmFileName>PandoraSvm_v03_11_00.xml</SvmFileName>
+                <SvmName>NeutrinoId</SvmName>
+            </tool>
         </SliceIdTools>
         <InputHitListName>Input</InputHitListName>
         <InputMCParticleListName>Input</InputMCParticleListName>
@@ -39,6 +43,18 @@
         <RecreatedClusterListName>RecreatedClusters</RecreatedClusterListName>
         <RecreatedVertexListName>RecreatedVertices</RecreatedVertexListName>
         <VisualizeOverallRecoStatus>false</VisualizeOverallRecoStatus>
+    </algorithm>
+
+    <algorithm type = "LArMCParticleMonitoring">
+        <CaloHitListName>CaloHitList2D</CaloHitListName>
+        <MCParticleListName>Input</MCParticleListName>
+        <PfoListName>RecreatedPfos</PfoListName>
+        <MinHitsForDisplay>0</MinHitsForDisplay>
+    </algorithm>
+
+    <algorithm type = "MyTrackShowerIdAlgorithm">
+        <OutputTree>ParticleEnergies</OutputTree>
+        <OutputFile>ParticleEnergies.root</OutputFile>
     </algorithm>
 
     <algorithm type = "LArEventValidation">
@@ -51,11 +67,12 @@
         <WriteToTree>false</WriteToTree>
         <OutputTree>Validation</OutputTree>
         <OutputFile>Validation.root</OutputFile>
-        <TestBeamMode>true</TestBeamMode>
     </algorithm>
-
+<!--
     <algorithm type = "LArVisualMonitoring">
         <ShowCurrentPfos>true</ShowCurrentPfos>
+        <MCParticleListNames>Input</MCParticleListNames>
         <ShowDetector>true</ShowDetector>
     </algorithm>
+-->
 </pandora>

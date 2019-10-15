@@ -44,7 +44,7 @@
         <VisualizeOverallRecoStatus>false</VisualizeOverallRecoStatus>
     </algorithm>
 
-    <algorithm type = "LArNeutrinoEventValidation">
+    <algorithm type = "LArEventValidation">
         <CaloHitListName>CaloHitList2D</CaloHitListName>
         <MCParticleListName>Input</MCParticleListName>
         <PfoListName>RecreatedPfos</PfoListName>
