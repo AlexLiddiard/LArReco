@@ -22,6 +22,12 @@ include(PandoraCMakeSettings)
 # Prefer local include directory to any paths to installed header files
 include_directories(include)
 
+find_package(ROOT 5.26.00 REQUIRED COMPONENTS Eve Geom RGL EG)
+include_directories(${ROOT_INCLUDE_DIRS})
+link_libraries(${ROOT_LIBRARIES} ${ROOT_COMPONENT_LIBRARIES})
+add_definitions(${ROOT_DEFINITIONS})
+add_definitions("-DMONITORING")
+
 find_package(PandoraSDK 03.03.00 REQUIRED)
 find_package(LArContent 03.15.00 REQUIRED)
 

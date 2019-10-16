@@ -10,6 +10,9 @@
 
 #include "Pandora/Algorithm.h"
 
+#include "TFile.h"
+#include "TTree.h"
+
 /**
  *  @brief  MyTrackShowerIdAlgorithm class
  */
@@ -36,6 +39,9 @@ private:
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree
     std::string				m_fileName; 		///< Name of output file
+    TFile				*m_pTFile;		///< ROOT tree file
+    TTree				*m_pPfoTree;		///< PFO tree
+    int					cEvent;			///< Current event number			
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

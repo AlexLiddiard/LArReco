@@ -13,12 +13,14 @@
         <FilteredCaloHitListName>CaloHitList2D</FilteredCaloHitListName>
         <CurrentCaloHitListReplacement>CaloHitList2D</CurrentCaloHitListReplacement>
     </algorithm>
-<!--
+
+    <!--
     <algorithm type = "LArVisualMonitoring">
         <CaloHitListNames>CaloHitListU CaloHitListV CaloHitListW</CaloHitListNames>
         <ShowDetector>true</ShowDetector>
     </algorithm>
--->
+    -->
+
     <algorithm type = "LArMaster">
         <CRSettingsFile>PandoraSettings_Cosmic_Standard.xml</CRSettingsFile>
         <NuSettingsFile>PandoraSettings_Neutrino_MicroBooNE.xml</NuSettingsFile>
@@ -53,8 +55,8 @@
     </algorithm>
 
     <algorithm type = "MyTrackShowerIdAlgorithm">
-        <OutputTree>ParticleEnergies</OutputTree>
-        <OutputFile>ParticleEnergies.root</OutputFile>
+        <OutputTree>PFO</OutputTree>
+        <OutputFile>PFOs.root</OutputFile>
     </algorithm>
 
     <algorithm type = "LArEventValidation">
@@ -68,6 +70,7 @@
         <OutputTree>Validation</OutputTree>
         <OutputFile>Validation.root</OutputFile>
     </algorithm>
+
 <!--
     <algorithm type = "LArVisualMonitoring">
         <ShowCurrentPfos>true</ShowCurrentPfos>
