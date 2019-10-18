@@ -39,7 +39,8 @@ public:
 private:
     pandora::StatusCode Run();
     pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
-    int WritePfo(int pfoId, int parentPfoId, int hierarchyTier, const pandora::ParticleFlowObject *const pPfo);
+
+    int WritePfo(const pandora::ParticleFlowObject *const pPfoint, int pfoId = 0, int parentPfoId = -1, int hierarchyTier = 0);
 
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree
@@ -47,7 +48,10 @@ private:
     TFile				*m_pTFile;		///< ROOT tree file
     TTree				*m_pPfoTree;		///< PFO tree
     int					cEventId;		///< Current event id
-    int					cPfoId;			///< Current pfo id			
+    int					cParentPfoId;		///< Parent pfo id
+    int					cPfoId;			///< Current pfo id
+    int					cHierarchyTier;		///< Hierarchy tier of the pfo
+    pandora::IntVector			*m_pDaughterPfoIds;	///< Daughter pfo ids
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

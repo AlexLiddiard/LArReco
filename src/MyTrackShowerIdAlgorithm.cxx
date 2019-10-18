@@ -27,72 +27,13 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
     if (neutrinoPfos.size() == 1)
     {
-        WritePfo(0, -1, 0, neutrinoPfos.front());
+        WritePfo(neutrinoPfos.front());
         cEventId++;
     }
-
-    /*
-    int nMCParticles(0);
-    FloatVector MCParticleEnergies;
-
-    int nClusters(0);
-    FloatVector clusterHadronicEnergies;
-    FloatVector clusterElectromagneticEnergies;
-
-    int nParticleFlowObjects(0);
-    FloatVector parcicleFlowObjectEnergies;
-
-    // Try writing a value to the root tree
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName.c_str(), "testVariable", 6258465));
-
-    const MCParticleList *pMCParticleList(nullptr);
-    const ClusterList *pClusterList(nullptr);
-    const PfoList *pPfoList(nullptr);
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pMCParticleList));
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pClusterList));
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
-
-    PANDORA_MONITORING_API(SetEveDisplayParameters(this->GetPandora(), true, DETECTOR_VIEW_XZ, -1.f, -1.f, 1.f));
-    PANDORA_MONITORING_API(VisualizeMCParticles(this->GetPandora(), pMCParticleList, "MyMCParticles", BLUE));
-    PANDORA_MONITORING_API(ViewEvent(this->GetPandora()));
-
-    for (const MCParticle *const pMCParticle : *pMCParticleList)
-    {
-        MCParticleEnergies.push_back(pMCParticle->GetEnergy());
-        nMCParticles++;
-    }
-
-    for (const Cluster *const pCluster : *pClusterList)
-    {
-        clusterHadronicEnergies.push_back(pCluster->GetHadronicEnergy());
-        clusterElectromagneticEnergies.push_back(pCluster->GetElectromagneticEnergy());
-        nClusters++;
-    }
-
-    for (const ParticleFlowObject *const pParticleFlowObject : *pPfoList)
-    {
-        parcicleFlowObjectEnergies.push_back(pParticleFlowObject->GetEnergy());
-        nParticleFlowObjects++;
-    }
-
-    // Try writing values to the root tree
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName.c_str(), "testVariable", 62584652));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "nMCParticles", nMCParticles));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "MCParticleEnergies", &MCParticleEnergies));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "nClusters", nClusters));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "clusterHadronicEnergies", &clusterHadronicEnergies));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "clusterElectromagneticEnergies", &clusterElectromagneticEnergies));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "nParticleFlowObjects", nParticleFlowObjects));
-    PANDORA_MONITORING_API(SetTreeVariable(this->GetPandora(), m_treeName, "particleFlowObjectEnergies", &parcicleFlowObjectEnergies));
-
-    // Fill the root tree
-    PANDORA_MONITORING_API(FillTree(this->GetPandora(), m_treeName.c_str()));
-    */
-
     return STATUS_CODE_SUCCESS;
 }
 
-int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, int hierarchyTier, const ParticleFlowObject *const pPfo)
+int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int pfoId, int parentPfoId, int hierarchyTier)
 {
     IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
     int pfosWritten(0);		// pfosWritten = 0.
@@ -100,13 +41,12 @@ int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, int hierarchy
     {
         int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
         daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
-        pfosWritten += WritePfo(daughterPfoId, pfoId, hierarchyTier + 1, daughterPfo); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
+        pfosWritten += WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
     std::cout << "MyTrackShowerIdAlgorithm: Writing a PFO to the tree!" << std::endl;
     std::cout << "MyTrackShowerIdAlgorithm: \tThe parent PFO ID is " << parentPfoId << std::endl;
-    // Write parentPfoId to ROOT tree
     std::cout << "MyTrackShowerIdAlgorithm: \tThe PFO ID is " << pfoId << std::endl;
-    // Write pfoId to ROOT tree
+
     if (daughterPfoIds.size() > 0)
     {
         std::cout << "MyTrackShowerIdAlgorithm: \tThe daughter PFO IDs are ";
@@ -120,19 +60,22 @@ int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, int hierarchy
     {
         std::cout << "MyTrackShowerIdAlgorithm: \tThe PFO has no daughters." << std::endl;
     }
-    // Write daughterPfoIds to ROOT tree
     std::cout << "MyTrackShowerIdAlgorithm: \tThe hierarchy tier of this PFO is " << hierarchyTier << std::endl;
+
+    cParentPfoId = parentPfoId; // Write parentPfoId to ROOT tree
+    cPfoId = pfoId; // Write pfoId to ROOT tree
+    m_pDaughterPfoIds = &daughterPfoIds; // Write daughterPfoIds to ROOT tree
+    cHierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
 /*
 Write all other properties of pPFO to ROOT tree
-Fill the tree.
-    */
+*/
+    m_pPfoTree->Fill(); // Fill the tree.
     pfosWritten += 1;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
-    cEventId(0),
-    cPfoId(0)
+    cEventId(0)
 {
 }
 
@@ -168,12 +111,22 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     {
         std::cout <<  "MyTrackShowerIdAlgorithm: PFO tree not found, creating a new one." << std::endl;
         m_pPfoTree = new TTree("PFO","A PFO tree.");
-        m_pPfoTree->Branch("EventId", &cEventId,"EventId/I");
-        m_pPfoTree->Branch("PfoId", &cPfoId,"PfoId/I");
+        m_pPfoTree->Branch("EventId", &cEventId);
+        m_pPfoTree->Branch("PfoId", &cPfoId);
+	m_pPfoTree->Branch("ParentPfoId", &cParentPfoId);
+        m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
+        m_pPfoTree->Branch("HierarchyTier",  &cHierarchyTier);
     }
     else
     {
-       // To do: set cEventId such that it is equal to next unused event number (won't be zero when events are already in the file)
+       // TODO: Set cEventId such that it is equal to next unused event number (won't be zero when events are already in the file)
+	
+       std::cout <<  "MyTrackShowerIdAlgorithm: Found an existing tree, already containing " << cEventId << " events." << std::endl;
+       m_pPfoTree->SetBranchAddress("EventId", &cEventId);
+       m_pPfoTree->SetBranchAddress("PfoId", &cPfoId);
+       m_pPfoTree->SetBranchAddress("ParentPfoId", &cParentPfoId);
+       m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
+       m_pPfoTree->SetBranchAddress("HierarchyTier",  &cHierarchyTier);
     }
 
     return STATUS_CODE_SUCCESS;
