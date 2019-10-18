@@ -107,12 +107,20 @@ int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, const Particl
     // Write parentPfoId to ROOT tree
     std::cout << "MyTrackShowerIdAlgorithm: The PFO ID is " << pfoId << std::endl;
     // Write pfoId to ROOT tree
-    std::cout << "MyTrackShowerIdAlgorithm: The daughter PFO IDs are ";
-    for (int daughterPfoId : daughterPfoIds)
+    if (daughterPfoIds.size() > 0)
     {
-        std::cout << daughterPfoId << " ";
+        std::cout << "MyTrackShowerIdAlgorithm: The daughter PFO IDs are ";
+        for (int daughterPfoId : daughterPfoIds)
+        {
+            std::cout << daughterPfoId << " ";
+        }
+        std::cout << std::endl;
     }
-    std::cout << std::endl;
+    else
+    {
+        std::cout << "MyTrackShowerIdAlgorithm: The PFO has no daughters." << std::endl;
+    }
+    
 
     // Write daughterPfoIds to ROOT tree
 /*
