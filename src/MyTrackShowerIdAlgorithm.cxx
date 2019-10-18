@@ -27,7 +27,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
     if (neutrinoPfos.size() == 1)
     {
-        WritePfo(0, -1, neutrinoPfos.front());
+        WritePfo(0, -1, 0, neutrinoPfos.front());
         cEventId++;
     }
 
@@ -92,7 +92,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
-int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, const ParticleFlowObject *const pPfo)
+int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, int hierarchyTier, const ParticleFlowObject *const pPfo)
 {
     IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
     int pfosWritten(0);		// pfosWritten = 0.
@@ -100,16 +100,16 @@ int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, const Particl
     {
         int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
         daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
-        pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
+        pfosWritten += WritePfo(daughterPfoId, pfoId, hierarchyTier + 1, daughterPfo); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
-    std::cout << "MyTrackShowerIdAlgorithm: Writing PFO to the tree!" << std::endl;
-    std::cout << "MyTrackShowerIdAlgorithm: The parent PFO ID is " << parentPfoId << std::endl;
+    std::cout << "MyTrackShowerIdAlgorithm: Writing a PFO to the tree!" << std::endl;
+    std::cout << "MyTrackShowerIdAlgorithm: \tThe parent PFO ID is " << parentPfoId << std::endl;
     // Write parentPfoId to ROOT tree
-    std::cout << "MyTrackShowerIdAlgorithm: The PFO ID is " << pfoId << std::endl;
+    std::cout << "MyTrackShowerIdAlgorithm: \tThe PFO ID is " << pfoId << std::endl;
     // Write pfoId to ROOT tree
     if (daughterPfoIds.size() > 0)
     {
-        std::cout << "MyTrackShowerIdAlgorithm: The daughter PFO IDs are ";
+        std::cout << "MyTrackShowerIdAlgorithm: \tThe daughter PFO IDs are ";
         for (int daughterPfoId : daughterPfoIds)
         {
             std::cout << daughterPfoId << " ";
@@ -118,11 +118,10 @@ int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, const Particl
     }
     else
     {
-        std::cout << "MyTrackShowerIdAlgorithm: The PFO has no daughters." << std::endl;
+        std::cout << "MyTrackShowerIdAlgorithm: \tThe PFO has no daughters." << std::endl;
     }
-    
-
     // Write daughterPfoIds to ROOT tree
+    std::cout << "MyTrackShowerIdAlgorithm: \tThe hierarchy tier of this PFO is " << hierarchyTier << std::endl;
 /*
 Write all other properties of pPFO to ROOT tree
 Fill the tree.

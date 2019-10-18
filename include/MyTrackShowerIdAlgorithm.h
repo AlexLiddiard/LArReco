@@ -39,7 +39,7 @@ public:
 private:
     pandora::StatusCode Run();
     pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
-    int WritePfo(int pfoId, int parentPfoId, const pandora::ParticleFlowObject *const pPfo);
+    int WritePfo(int pfoId, int parentPfoId, int hierarchyTier, const pandora::ParticleFlowObject *const pPfo);
 
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree
