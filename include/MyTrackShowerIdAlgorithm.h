@@ -9,7 +9,6 @@
 #define MY_TRACK_SHOWER_ID_ALGORITHM_H 1
 
 #include "Pandora/Algorithm.h"
-
 #include "TFile.h"
 #include "TTree.h"
 
@@ -27,6 +26,11 @@ public:
     public:
         pandora::Algorithm *CreateAlgorithm() const;
     };
+
+    /**
+     *  @brief  Constructor
+     */
+    MyTrackShowerIdAlgorithm();
     /**
      *  @brief  Destructor
      */
@@ -35,13 +39,15 @@ public:
 private:
     pandora::StatusCode Run();
     pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
+    int WritePfo(int pfoId, int parentPfoId, const pandora::ParticleFlowObject *const pPfo);
 
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree
     std::string				m_fileName; 		///< Name of output file
     TFile				*m_pTFile;		///< ROOT tree file
     TTree				*m_pPfoTree;		///< PFO tree
-    int					cEvent;			///< Current event number			
+    int					cEventId;		///< Current event id
+    int					cPfoId;			///< Current pfo id			
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

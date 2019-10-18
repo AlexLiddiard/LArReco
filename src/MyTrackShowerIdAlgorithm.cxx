@@ -8,8 +8,9 @@
 
 #include "Pandora/AlgorithmHeaders.h"
 #include "MyTrackShowerIdAlgorithm.h"
+#include "larpandoracontent/LArHelpers/LArPfoHelper.h"
 
-//#include "TFile.h"
+using namespace lar_content;
 
 using namespace pandora;
 
@@ -20,15 +21,15 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
 
     const PfoList *pPfoList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
-
-    int cPfo(0);
-    for (const ParticleFlowObject *const pParticleFlowObject : *pPfoList)
+    
+    //const PfoList *pNeutrinoPfoList(nullptr);
+    PfoList neutrinoPfos;
+    LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
+    if (neutrinoPfos.size() == 1)
     {
-        m_pPfoTree->Fill();
-        cPfo++;
+        WritePfo(0, -1, neutrinoPfos.front());
+        cEventId++;
     }
-
-    cEvent++;
 
     /*
     int nMCParticles(0);
@@ -91,28 +92,56 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
+int MyTrackShowerIdAlgorithm::WritePfo(int pfoId, int parentPfoId, const ParticleFlowObject *const pPfo)
+{
+    IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
+    int pfosWritten(0);		// pfosWritten = 0.
+    for (const ParticleFlowObject *const daughterPfo : pPfo->GetDaughterPfoList()) // for each daughterPfo in pPfo.daughterPfos:
+    {
+        int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
+        daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
+        pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
+    }
+    std::cout << "MyTrackShowerIdAlgorithm: Writing PFO to the tree!" << std::endl;
+    std::cout << "MyTrackShowerIdAlgorithm: The parent PFO ID is " << parentPfoId << std::endl;
+    // Write parentPfoId to ROOT tree
+    std::cout << "MyTrackShowerIdAlgorithm: The PFO ID is " << pfoId << std::endl;
+    // Write pfoId to ROOT tree
+    std::cout << "MyTrackShowerIdAlgorithm: The daughter PFO IDs are ";
+    for (int daughterPfoId : daughterPfoIds)
+    {
+        std::cout << daughterPfoId << " ";
+    }
+    std::cout << std::endl;
+
+    // Write daughterPfoIds to ROOT tree
+/*
+Write all other properties of pPFO to ROOT tree
+Fill the tree.
+    */
+    pfosWritten += 1;
+    return pfosWritten;	// return pfosWritten += 1.
+}
+
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
-    cEvent(0),
-    cPfo(0)
+    cEventId(0),
+    cPfoId(0)
 {
 }
 
 MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
 {
-    /*
     // Save the root tree
     std::cout << "MyTrackShowerIdAlgorithm: Saving ROOT tree " << m_treeName << " to file " << m_fileName << std::endl;
     try
     {
-        PANDORA_MONITORING_API(SaveTree(this->GetPandora(), m_treeName, m_fileName, "UPDATE"));
+        m_pTFile->Write();
     }
     catch (const StatusCodeException &)
     {
         std::cout << "MyTrackShowerIdAlgorithm: Unable to write tree!" << std::endl;
     }
-    */
-    std::cout <<  "MyTrackShowerIdAlgorithm: Writing to tree file." << std::endl;
-    m_pTFile->Write();
+
     delete m_pTFile;
 }
 
@@ -132,12 +161,12 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     {
         std::cout <<  "MyTrackShowerIdAlgorithm: PFO tree not found, creating a new one." << std::endl;
         m_pPfoTree = new TTree("PFO","A PFO tree.");
-        m_pPfoTree.Branch("Event", &cEvent,"Event/I");
-        m_pPfoTree.Branch("PFO", &cEvent,"PFO/I");
+        m_pPfoTree->Branch("EventId", &cEventId,"EventId/I");
+        m_pPfoTree->Branch("PfoId", &cPfoId,"PfoId/I");
     }
     else
     {
-       // To do: set cEvent such that it is equal to next unused event number (won't be zero when events are already in the file)
+       // To do: set cEventId such that it is equal to next unused event number (won't be zero when events are already in the file)
     }
 
     return STATUS_CODE_SUCCESS;
