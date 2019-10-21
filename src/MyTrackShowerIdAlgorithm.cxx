@@ -22,13 +22,12 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     const PfoList *pPfoList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
     
-    //const PfoList *pNeutrinoPfoList(nullptr);
     PfoList neutrinoPfos;
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
-    if (neutrinoPfos.size() == 1)
+    for (const ParticleFlowObject *const neutrinoPfo : neutrinoPfos) // for each neutrinoPfo (there might be some CRs reconstructed as neutrinos)
     {
-        WritePfo(neutrinoPfos.front());
-        cEventId++;
+        WritePfo(neutrinoPfo);
+        m_EventId++;
     }
     return STATUS_CODE_SUCCESS;
 }
@@ -62,37 +61,75 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     }
     std::cout << "MyTrackShowerIdAlgorithm: \tThe hierarchy tier of this PFO is " << hierarchyTier << std::endl;
 
-    cParentPfoId = parentPfoId; // Write parentPfoId to ROOT tree
-    cPfoId = pfoId; // Write pfoId to ROOT tree
+    m_ParentPfoId = parentPfoId; // Write parentPfoId to ROOT tree
+    m_PfoId = pfoId; // Write pfoId to ROOT tree
     m_pDaughterPfoIds = &daughterPfoIds; // Write daughterPfoIds to ROOT tree
-    cHierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
-/*
-Write all other properties of pPFO to ROOT tree
-*/
-    m_pPfoTree->Fill(); // Fill the tree.
+    m_HierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
+    
+    // Write all other properties of pPFO to ROOT tree   
+    GetMyCaloHits(pPfo, TPC_VIEW_U, m_pUCaloHits);
+    GetMyCaloHits(pPfo, TPC_VIEW_V, m_pVCaloHits);
+    GetMyCaloHits(pPfo, TPC_VIEW_W, m_pWCaloHits);
+    m_nUCaloHits = m_pUCaloHits->size();
+    m_nVCaloHits = m_pVCaloHits->size();
+    m_nVCaloHits = m_pWCaloHits->size();
+
+    m_pPfoTree->Fill(); // Fill the tree
     pfosWritten += 1;
+
+    // Delete any locally created objects
+    delete m_pDaughterPfoIds;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
+void MyTrackShowerIdAlgorithm::GetMyCaloHits(const ParticleFlowObject *const pPfo, const HitType &hitType, std::vector<MyCaloHit>* myCaloHits)
+{
+    myCaloHits->clear();
+    CaloHitList caloHitList;
+    LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
+    for (const CaloHit *const caloHit : caloHitList) // for each daughterPfo in pPfo.daughterPfos:
+    {
+        const CartesianVector &positionVector(caloHit->GetPositionVector());
+        myCaloHits->push_back(MyCaloHit(
+        { 
+            positionVector.GetX(),
+            positionVector.GetY(),
+            positionVector.GetZ(),
+            caloHit->GetElectromagneticEnergy(), 
+            caloHit->GetHadronicEnergy()
+        }));
+    }
+}
+
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
-    cEventId(0)
+    m_EventId(0),
+    m_pUCaloHits(),
+    m_pVCaloHits(),
+    m_pWCaloHits()
 {
 }
 
 MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
 {
+    // Build index for PFOs
+    m_pPfoTree->BuildIndex("EventId", "PfoId");
+
     // Save the root tree
     std::cout << "MyTrackShowerIdAlgorithm: Saving ROOT tree " << m_treeName << " to file " << m_fileName << std::endl;
     try
     {
-        m_pTFile->Write();
+        m_pPfoTree->Write();
+        m_pTFile->Close();
     }
     catch (const StatusCodeException &)
     {
         std::cout << "MyTrackShowerIdAlgorithm: Unable to write tree!" << std::endl;
     }
-
+    
     delete m_pTFile;
+    delete m_pUCaloHits;
+    delete m_pVCaloHits;
+    delete m_pWCaloHits;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -103,6 +140,8 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName));
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
 
+    gSystem->Load("./libLArReco.so");
+
     // Open/create tree file
     std::cout <<  "MyTrackShowerIdAlgorithm: Opening tree file." << std::endl;
     m_pTFile = new TFile(m_fileName.c_str(), "UPDATE");
@@ -111,22 +150,34 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     {
         std::cout <<  "MyTrackShowerIdAlgorithm: PFO tree not found, creating a new one." << std::endl;
         m_pPfoTree = new TTree("PFO","A PFO tree.");
-        m_pPfoTree->Branch("EventId", &cEventId);
-        m_pPfoTree->Branch("PfoId", &cPfoId);
-	m_pPfoTree->Branch("ParentPfoId", &cParentPfoId);
+        m_pPfoTree->Branch("EventId", &m_EventId);
+        m_pPfoTree->Branch("PfoId", &m_PfoId);
+	m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
-        m_pPfoTree->Branch("HierarchyTier",  &cHierarchyTier);
+        m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
+        m_pPfoTree->Branch("UCaloHits",  &m_pUCaloHits);
+        m_pPfoTree->Branch("VCaloHits",  &m_pVCaloHits);
+        m_pPfoTree->Branch("WCaloHits",  &m_pWCaloHits);
+        m_pPfoTree->Branch("nUCaloHits",  &m_nUCaloHits);
+        m_pPfoTree->Branch("nVCaloHits",  &m_nVCaloHits);
+        m_pPfoTree->Branch("nWCaloHits",  &m_nWCaloHits);
     }
     else
     {
-       // TODO: Set cEventId such that it is equal to next unused event number (won't be zero when events are already in the file)
+       // TODO: Set m_EventId such that it is equal to next unused event number (won't be zero when events are already in the file)
 	
-       std::cout <<  "MyTrackShowerIdAlgorithm: Found an existing tree, already containing " << cEventId << " events." << std::endl;
-       m_pPfoTree->SetBranchAddress("EventId", &cEventId);
-       m_pPfoTree->SetBranchAddress("PfoId", &cPfoId);
-       m_pPfoTree->SetBranchAddress("ParentPfoId", &cParentPfoId);
-       m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
-       m_pPfoTree->SetBranchAddress("HierarchyTier",  &cHierarchyTier);
+        std::cout <<  "MyTrackShowerIdAlgorithm: Found an existing tree, already containing " << m_EventId << " events." << std::endl;
+        m_pPfoTree->SetBranchAddress("EventId", &m_EventId);
+        m_pPfoTree->SetBranchAddress("PfoId", &m_PfoId);
+        m_pPfoTree->SetBranchAddress("ParentPfoId", &m_ParentPfoId);
+        m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
+        m_pPfoTree->SetBranchAddress("HierarchyTier",  &m_HierarchyTier);
+        m_pPfoTree->SetBranchAddress("UCaloHits",  &m_pUCaloHits);
+        m_pPfoTree->SetBranchAddress("VCaloHits",  &m_pVCaloHits);
+        m_pPfoTree->SetBranchAddress("WCaloHits",  &m_pWCaloHits);
+        m_pPfoTree->SetBranchAddress("nUCaloHits",  &m_nUCaloHits);
+        m_pPfoTree->SetBranchAddress("nVCaloHits",  &m_nVCaloHits);
+        m_pPfoTree->SetBranchAddress("nWCaloHits",  &m_nWCaloHits);
     }
 
     return STATUS_CODE_SUCCESS;
