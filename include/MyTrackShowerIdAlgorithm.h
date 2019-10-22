@@ -16,10 +16,10 @@
 struct PlaneCaloHits 
 {
     int					nHits;				///< Number of calo hits
-    pandora::FloatVector		driftCoord;			///< hit x
-    pandora::FloatVector		wireCoord;			///< hit u/v/w
-    pandora::FloatVector		electromagneticEnergy;		///< hit electromagnetic energy
-    pandora::FloatVector		hadronicEnergy;			///< hit hadronic energy
+    pandora::FloatVector		*pDriftCoord;			///< hit x
+    pandora::FloatVector		*pWireCoord;			///< hit u/v/w
+    pandora::FloatVector		*pElectromagneticEnergy;	///< hit electromagnetic energy
+    pandora::FloatVector		*pHadronicEnergy;		///< hit hadronic energy
 };
 
 /**
@@ -67,9 +67,9 @@ private:
     pandora::IntVector			*m_pDaughterPfoIds;	///< Daughter PFO ids
     float				m_Vertex[3];		///< PFO interaction vertex
 
-    PlaneCaloHits			m_UCaloHits;		/// U plane calo hits
-    PlaneCaloHits			m_VCaloHits;		/// V plane calo hits
-    PlaneCaloHits			m_WCaloHits;		/// W plane calo hits
+    PlaneCaloHits			m_UCaloHits;		///< U plane calo hits
+    PlaneCaloHits			m_VCaloHits;		///< V plane calo hits
+    PlaneCaloHits			m_WCaloHits;		///< W plane calo hits
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

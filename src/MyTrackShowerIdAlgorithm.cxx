@@ -84,10 +84,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     const HitType &hitType,
     PlaneCaloHits *planeCaloHits)
 {
-    planeCaloHits->driftCoord.clear();
-    planeCaloHits->wireCoord.clear();
-    planeCaloHits->electromagneticEnergy.clear();
-    planeCaloHits->hadronicEnergy.clear();
+    planeCaloHits->pDriftCoord->clear();
+    planeCaloHits->pWireCoord->clear();
+    planeCaloHits->pElectromagneticEnergy->clear();
+    planeCaloHits->pHadronicEnergy->clear();
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
@@ -95,10 +95,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
 
-        planeCaloHits->driftCoord.push_back(positionVector.GetX());
-        planeCaloHits->wireCoord.push_back(positionVector.GetZ());
-        planeCaloHits->electromagneticEnergy.push_back(caloHit->GetElectromagneticEnergy());
-        planeCaloHits->hadronicEnergy.push_back(caloHit->GetHadronicEnergy());
+        planeCaloHits->pDriftCoord->push_back(positionVector.GetX());
+        planeCaloHits->pWireCoord->push_back(positionVector.GetZ());
+        planeCaloHits->pElectromagneticEnergy->push_back(caloHit->GetElectromagneticEnergy());
+        planeCaloHits->pHadronicEnergy->push_back(caloHit->GetHadronicEnergy());
         planeCaloHits->nHits++;
     }
 }
@@ -152,18 +152,18 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 	m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->Branch("DriftCoordU",  &(m_UCaloHits.driftCoord));
-        m_pPfoTree->Branch("WireCoordU",  &(m_UCaloHits.wireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyU",  &(m_UCaloHits.electromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyU",  &(m_UCaloHits.hadronicEnergy));
-        m_pPfoTree->Branch("DriftCoordV",  &(m_VCaloHits.driftCoord));
-        m_pPfoTree->Branch("WireCoordV",  &(m_VCaloHits.wireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyV",  &(m_VCaloHits.electromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyV",  &(m_VCaloHits.hadronicEnergy));
-        m_pPfoTree->Branch("DriftCoordW",  &(m_WCaloHits.driftCoord));
-        m_pPfoTree->Branch("WireCoordW",  &(m_WCaloHits.wireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyW",  &(m_WCaloHits.electromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyW",  &(m_WCaloHits.hadronicEnergy));
+        m_pPfoTree->Branch("DriftCoordU",  &(m_UCaloHits.pDriftCoord));
+        m_pPfoTree->Branch("WireCoordU",  &(m_UCaloHits.pWireCoord));
+        m_pPfoTree->Branch("ElectromagneticEnergyU",  &(m_UCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->Branch("HadronicEnergyU",  &(m_UCaloHits.pHadronicEnergy));
+        m_pPfoTree->Branch("DriftCoordV",  &(m_VCaloHits.pDriftCoord));
+        m_pPfoTree->Branch("WireCoordV",  &(m_VCaloHits.pWireCoord));
+        m_pPfoTree->Branch("ElectromagneticEnergyV",  &(m_VCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->Branch("HadronicEnergyV",  &(m_VCaloHits.pHadronicEnergy));
+        m_pPfoTree->Branch("DriftCoordW",  &(m_WCaloHits.pDriftCoord));
+        m_pPfoTree->Branch("WireCoordW",  &(m_WCaloHits.pWireCoord));
+        m_pPfoTree->Branch("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->Branch("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
     }
     else
     {
@@ -175,18 +175,18 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
         m_pPfoTree->SetBranchAddress("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->SetBranchAddress("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->SetBranchAddress("DriftCoordU",  &(m_UCaloHits.driftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordU",  &(m_UCaloHits.wireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyU",  &(m_UCaloHits.electromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyU",  &(m_UCaloHits.hadronicEnergy));
-        m_pPfoTree->SetBranchAddress("DriftCoordV",  &(m_VCaloHits.driftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordV",  &(m_VCaloHits.wireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyV",  &(m_VCaloHits.electromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyV",  &(m_VCaloHits.hadronicEnergy));
-        m_pPfoTree->SetBranchAddress("DriftCoordW",  &(m_WCaloHits.driftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordW",  &(m_WCaloHits.wireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyW",  &(m_WCaloHits.electromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyW",  &(m_WCaloHits.hadronicEnergy));
+        m_pPfoTree->SetBranchAddress("DriftCoordU",  &(m_UCaloHits.pDriftCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordU",  &(m_UCaloHits.pWireCoord));
+        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyU",  &(m_UCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->SetBranchAddress("HadronicEnergyU",  &(m_UCaloHits.pHadronicEnergy));
+        m_pPfoTree->SetBranchAddress("DriftCoordV",  &(m_VCaloHits.pDriftCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordV",  &(m_VCaloHits.pWireCoord));
+        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyV",  &(m_VCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->SetBranchAddress("HadronicEnergyV",  &(m_VCaloHits.pHadronicEnergy));
+        m_pPfoTree->SetBranchAddress("DriftCoordW",  &(m_WCaloHits.pDriftCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordW",  &(m_WCaloHits.pWireCoord));
+        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
+        m_pPfoTree->SetBranchAddress("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
     }
 
     return STATUS_CODE_SUCCESS;
