@@ -84,28 +84,26 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
 
 void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     const ParticleFlowObject *const pPfo,
-    const HitType &hitType, 
-    pandora::FloatVector		*m_pUHitx,
-    pandora::FloatVector		*m_pUHitu,
-    pandora::FloatVector		*m_pUHitEnergyE,
-    pandora::FloatVector		*m_pUHitEnergyH,
-    int					m_nUHits)
+    const HitType &hitType,
+    PlaneCaloHits *planeCaloHits
 {
-    myCaloHits->clear();
+    planeCaloHits->driftCoord.clear();
+    planeCaloHits->wireCoord.clear();
+    planeCaloHits->electromagneticEnergy.clear();
+    planeCaloHits->hadronicEnergy.clear();
+
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
     for (const CaloHit *const caloHit : caloHitList) // for each daughterPfo in pPfo.daughterPfos:
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
-        myCaloHits->push_back(MyCaloHit(
-        { 
-            positionVector.GetX(),
-            positionVector.GetY(),
-            positionVector.GetZ(),
-            caloHit->GetElectromagneticEnergy(), 
-            caloHit->GetHadronicEnergy()
-        }));
+
+        planeCaloHits->driftCoord.push_back(positionVector.GetX());
+        planeCaloHits->wireCoord.push_back(positionVector.GetZ());
+        planeCaloHits->electromagneticEnergy.push_back(caloHit->GetElectromagneticEnergy());
+        planeCaloHits->hadronicEnergy.push_back(caloHit->GetHadronicEnergy());
     }
+    planeCaloHits->nHits = ;
 }
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :

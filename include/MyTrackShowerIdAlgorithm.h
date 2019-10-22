@@ -12,6 +12,16 @@
 #include "TFile.h"
 #include "TTree.h"
 
+
+struct PlaneCaloHits 
+{
+    pandora::FloatVector		driftCoord;			///< hit x
+    pandora::FloatVector		wireCoord;			///< hit u/v/w
+    pandora::FloatVector		electromagneticEnergy;		///< hit electromagnetic energy
+    pandora::FloatVector		hadronicEnergy;			///< hit hadronic energy
+    int					mHits;				///< Number of calo hits
+};
+
 /**
  *  @brief  MyTrackShowerIdAlgorithm class
  */
@@ -41,7 +51,7 @@ private:
     pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
     int WritePfo(const pandora::ParticleFlowObject *const pPfo, int pfoId = 0, int parentPfoId = -1, int hierarchyTier = 0);
-    void GetMyCaloHits(const pandora::ParticleFlowObject *const pPfo, const pandora::HitType &hitType, std::vector<MyCaloHit>* myCaloHits);
+    void GetMyCaloHits(const pandora::ParticleFlowObject *const pPfo, const pandora::HitType &hitType, PlaneCaloHits *planeCaloHits);
 
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree
@@ -57,26 +67,9 @@ private:
     pandora::IntVector			*m_pDaughterPfoIds;	///< Daughter PFO ids
     int					m_Vertex[3];		///< PFO interaction vertex
 
-    // U plane CaloHits
-    pandora::FloatVector		*m_pUHitx;		///< U plane hit x
-    pandora::FloatVector		*m_pUHitu;		///< U plane hit u
-    pandora::FloatVector		*m_pUHitEnergyE;	///< U plane hit electromagnetic energy
-    pandora::FloatVector		*m_pUHitEnergyH;	///< U plane hit hadronic energy
-    int					m_nUHits;		///< Number of U plane calo hits
-
-    // V plane CaloHits
-    pandora::FloatVector		*m_pVHitx;		///< V plane hit x
-    pandora::FloatVector		*m_pVHitv;		///< V plane hit v
-    pandora::FloatVector		*m_pVHitEnergyE;	///< V plane hit electromagnetic energy
-    pandora::FloatVector		*m_pVHitEnergyH;	///< V plane hit hadronic energy
-    int					m_nVHits;		///< Number of V plane calo hits
-
-    // W plane CaloHits
-    pandora::FloatVector		*m_pWHitx;		///< W plane hit x
-    pandora::FloatVector		*m_pWHitw;		///< W plane hit v
-    pandora::FloatVector		*m_pWHitEnergyE;	///< W plane hit electromagnetic energy
-    pandora::FloatVector		*m_pWHitEnergyH;	///< W plane hit hadronic energy
-    int					m_nWHits;		///< Number of W plane calo hits
+    PlaneCaloHits			m_UCaloHits;		/// U plane calo hits
+    PlaneCaloHits			m_VCaloHits;		/// V plane calo hits
+    PlaneCaloHits			m_WCaloHits;		/// W plane calo hits
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
