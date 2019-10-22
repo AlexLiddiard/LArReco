@@ -32,6 +32,22 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
+
+/*
+Inputs:
+const ParticleFlowObject *const pPfo	// The PFO to be written to the ROOT tree.
+int pfoId				// The next available PFO ID in the ROOT tree, the PFO itself will be written with this ID.
+int parentPfoId				// The PFO may have a parent, this is its PFO ID. If the PFO has no parent (i.e. is a neutrino) it should be -1 to indicate this.
+int hierarchyTier			// The hierarchy tier of the PFO, e.g. the neutrino is tier 0, its daughters are tier 1, daughters of its daughters are tier 2, etc.
+
+What it does:
+Writes the PFO to the ROOT tree.
+If the PFO has descendants (say n descendants) these are also written to the ROOT tree, and are allocated the PFO IDs from (pfoId + 1) to (pfoId + n).
+
+Returns:
+int: the total number of PFOs written, i.e. returns the value n + 1.
+*/
+
 int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int pfoId, int parentPfoId, int hierarchyTier)
 {
     IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
@@ -70,6 +86,11 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UCaloHits);
     GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VCaloHits);
     GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WCaloHits);
+    const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
+    const CartesianVector &vertexPosition(vertex->GetPosition());
+    m_Vertex[0] = vertexPosition.GetX();
+    m_Vertex[1] = vertexPosition.GetY();
+    m_Vertex[2] = vertexPosition.GetZ();
 
     m_pPfoTree->Fill(); // Fill the tree
     pfosWritten += 1;
@@ -129,6 +150,18 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
     }
     
     delete m_pTFile;
+    delete m_UCaloHits.pDriftCoord;
+    delete m_UCaloHits.pWireCoord;
+    delete m_UCaloHits.pElectromagneticEnergy;
+    delete m_UCaloHits.pHadronicEnergy;
+    delete m_VCaloHits.pDriftCoord;
+    delete m_VCaloHits.pWireCoord;
+    delete m_VCaloHits.pElectromagneticEnergy;
+    delete m_VCaloHits.pHadronicEnergy;
+    delete m_WCaloHits.pDriftCoord;
+    delete m_WCaloHits.pWireCoord;
+    delete m_WCaloHits.pElectromagneticEnergy;
+    delete m_WCaloHits.pHadronicEnergy;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -164,6 +197,7 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
         m_pPfoTree->Branch("WireCoordW",  &(m_WCaloHits.pWireCoord));
         m_pPfoTree->Branch("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
         m_pPfoTree->Branch("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
+        m_pPfoTree->Branch("Vertex",  &m_Vertex, "m_Vertex[3]/F");
     }
     else
     {
@@ -187,6 +221,7 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
         m_pPfoTree->SetBranchAddress("WireCoordW",  &(m_WCaloHits.pWireCoord));
         m_pPfoTree->SetBranchAddress("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
         m_pPfoTree->SetBranchAddress("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
+        m_pPfoTree->SetBranchAddress("Vertex",  &m_Vertex);
     }
 
     return STATUS_CODE_SUCCESS;
