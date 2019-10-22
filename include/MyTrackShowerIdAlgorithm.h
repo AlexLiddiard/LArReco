@@ -12,16 +12,6 @@
 #include "TFile.h"
 #include "TTree.h"
 
-// CaloHit branch
-struct MyCaloHit
-{
-    float x;
-    float y;
-    float z;
-    float electromagneticEnergy;
-    float hadronicEnergy;
-};
-
 /**
  *  @brief  MyTrackShowerIdAlgorithm class
  */
@@ -65,13 +55,28 @@ private:
     int					m_PfoId;		///< Current PFO id
     int					m_ParentPfoId;		///< Parent PFO id
     pandora::IntVector			*m_pDaughterPfoIds;	///< Daughter PFO ids
-    std::vector<MyCaloHit>		*m_pUCaloHits;		///< U plane calo hits
-    std::vector<MyCaloHit>		*m_pVCaloHits;		///< V plane calo hits
-    std::vector<MyCaloHit>		*m_pWCaloHits;		///< W plane calo hits
-    int					m_nUCaloHits;		///< Number of U plane calo hits
-    int					m_nVCaloHits;		///< Number of V plane calo hits
-    int					m_nWCaloHits;		///< Number of W plane calo hits
     int					m_Vertex[3];		///< PFO interaction vertex
+
+    // U plane CaloHits
+    pandora::FloatVector		*m_pUHitx;		///< U plane hit x
+    pandora::FloatVector		*m_pUHitu;		///< U plane hit u
+    pandora::FloatVector		*m_pUHitEnergyE;	///< U plane hit electromagnetic energy
+    pandora::FloatVector		*m_pUHitEnergyH;	///< U plane hit hadronic energy
+    int					m_nUHits;		///< Number of U plane calo hits
+
+    // V plane CaloHits
+    pandora::FloatVector		*m_pVHitx;		///< V plane hit x
+    pandora::FloatVector		*m_pVHitv;		///< V plane hit v
+    pandora::FloatVector		*m_pVHitEnergyE;	///< V plane hit electromagnetic energy
+    pandora::FloatVector		*m_pVHitEnergyH;	///< V plane hit hadronic energy
+    int					m_nVHits;		///< Number of V plane calo hits
+
+    // W plane CaloHits
+    pandora::FloatVector		*m_pWHitx;		///< W plane hit x
+    pandora::FloatVector		*m_pWHitw;		///< W plane hit v
+    pandora::FloatVector		*m_pWHitEnergyE;	///< W plane hit electromagnetic energy
+    pandora::FloatVector		*m_pWHitEnergyH;	///< W plane hit hadronic energy
+    int					m_nWHits;		///< Number of W plane calo hits
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

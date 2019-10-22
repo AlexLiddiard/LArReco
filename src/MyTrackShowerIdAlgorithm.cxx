@@ -67,22 +67,29 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     m_HierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
     
     // Write all other properties of pPFO to ROOT tree   
-    GetMyCaloHits(pPfo, TPC_VIEW_U, m_pUCaloHits);
-    GetMyCaloHits(pPfo, TPC_VIEW_V, m_pVCaloHits);
-    GetMyCaloHits(pPfo, TPC_VIEW_W, m_pWCaloHits);
-    m_nUCaloHits = m_pUCaloHits->size();
-    m_nVCaloHits = m_pVCaloHits->size();
-    m_nVCaloHits = m_pWCaloHits->size();
+    //GetMyCaloHits(pPfo, TPC_VIEW_U, m_pUCaloHits);
+    //GetMyCaloHits(pPfo, TPC_VIEW_V, m_pVCaloHits);
+    //GetMyCaloHits(pPfo, TPC_VIEW_W, m_pWCaloHits);
+    //m_nUCaloHits = m_pUCaloHits->size();
+    //m_nVCaloHits = m_pVCaloHits->size();
+    //m_nVCaloHits = m_pWCaloHits->size();
 
     m_pPfoTree->Fill(); // Fill the tree
     pfosWritten += 1;
 
     // Delete any locally created objects
-    delete m_pDaughterPfoIds;
+    //delete m_pDaughterPfoIds;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
-void MyTrackShowerIdAlgorithm::GetMyCaloHits(const ParticleFlowObject *const pPfo, const HitType &hitType, std::vector<MyCaloHit>* myCaloHits)
+void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
+    const ParticleFlowObject *const pPfo,
+    const HitType &hitType, 
+    pandora::FloatVector		*m_pUHitx,
+    pandora::FloatVector		*m_pUHitu,
+    pandora::FloatVector		*m_pUHitEnergyE,
+    pandora::FloatVector		*m_pUHitEnergyH,
+    int					m_nUHits)
 {
     myCaloHits->clear();
     CaloHitList caloHitList;
@@ -103,7 +110,7 @@ void MyTrackShowerIdAlgorithm::GetMyCaloHits(const ParticleFlowObject *const pPf
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
-    m_pUCaloHits(),
+    m_pUCaloHits(0,),
     m_pVCaloHits(),
     m_pWCaloHits()
 {
@@ -140,8 +147,6 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName));
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
 
-    gSystem->Load("./libLArReco.so");
-
     // Open/create tree file
     std::cout <<  "MyTrackShowerIdAlgorithm: Opening tree file." << std::endl;
     m_pTFile = new TFile(m_fileName.c_str(), "UPDATE");
@@ -155,11 +160,12 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 	m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->Branch("UCaloHits",  &m_pUCaloHits);
-        m_pPfoTree->Branch("VCaloHits",  &m_pVCaloHits);
-        m_pPfoTree->Branch("WCaloHits",  &m_pWCaloHits);
+        //m_pPfoTree->Branch("UCaloHits",  &m_pUCaloHits);
+        //m_pPfoTree->Branch("VCaloHits",  &m_pVCaloHits);
+        //m_pPfoTree->Branch("WCaloHits",  &m_pWCaloHits);
         m_pPfoTree->Branch("nUCaloHits",  &m_nUCaloHits);
         m_pPfoTree->Branch("nVCaloHits",  &m_nVCaloHits);
+        m_pPfoTree->Branch("nWCaloHits",  &m_nWCaloHits);
         m_pPfoTree->Branch("nWCaloHits",  &m_nWCaloHits);
     }
     else
@@ -172,9 +178,9 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
         m_pPfoTree->SetBranchAddress("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->SetBranchAddress("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->SetBranchAddress("UCaloHits",  &m_pUCaloHits);
-        m_pPfoTree->SetBranchAddress("VCaloHits",  &m_pVCaloHits);
-        m_pPfoTree->SetBranchAddress("WCaloHits",  &m_pWCaloHits);
+        //m_pPfoTree->SetBranchAddress("UCaloHits",  &m_pUCaloHits);
+        //m_pPfoTree->SetBranchAddress("VCaloHits",  &m_pVCaloHits);
+        //m_pPfoTree->SetBranchAddress("WCaloHits",  &m_pWCaloHits);
         m_pPfoTree->SetBranchAddress("nUCaloHits",  &m_nUCaloHits);
         m_pPfoTree->SetBranchAddress("nVCaloHits",  &m_nVCaloHits);
         m_pPfoTree->SetBranchAddress("nWCaloHits",  &m_nWCaloHits);
