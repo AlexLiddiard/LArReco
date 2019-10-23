@@ -55,7 +55,7 @@
     </algorithm>
 -->
     <algorithm type = "MyTrackShowerIdAlgorithm">
-        <OutputTree>PFO</OutputTree>
+        <OutputTree>PFOs</OutputTree>
         <OutputFile>PFOs.root</OutputFile>
     </algorithm>
 

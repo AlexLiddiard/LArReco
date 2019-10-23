@@ -24,11 +24,12 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     
     PfoList neutrinoPfos;
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
-    for (const ParticleFlowObject *const neutrinoPfo : neutrinoPfos) // for each neutrinoPfo (there might be some CRs reconstructed as neutrinos)
+    if (neutrinoPfos.size() == 1) // White this event if there is exactly one neutrino PFO in the event (which there should be)
     {
-        this->WritePfo(neutrinoPfo);
-        m_EventId++;
+        this->WritePfo(neutrinoPfos.front());
     }
+
+    m_EventId++;
     return STATUS_CODE_SUCCESS;
 }
 
@@ -56,7 +57,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     {
         int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
         daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
-        pfosWritten += WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
+        pfosWritten += this->WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
     std::cout << "MyTrackShowerIdAlgorithm: Writing a PFO to the tree!" << std::endl;
     std::cout << "MyTrackShowerIdAlgorithm: \tThe parent PFO ID is " << parentPfoId << std::endl;
@@ -83,9 +84,10 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     m_HierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
     
     // Write all other properties of pPFO to ROOT tree   
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UCaloHits);
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VCaloHits);
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WCaloHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_3D, &m_WViewHits);
     const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
     const CartesianVector &vertexPosition(vertex->GetPosition());
     m_Vertex[0] = vertexPosition.GetX();
@@ -96,19 +98,19 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     pfosWritten += 1;
 
     // Delete any locally created objects
-    //delete m_pDaughterPfoIds;
+    delete m_pDaughterPfoIds;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
 void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     const ParticleFlowObject *const pPfo,
-    const HitType &hitType,
-    PlaneCaloHits *planeCaloHits)
+    HitType hitType,
+    ViewHits *viewHits)
 {
-    planeCaloHits->pDriftCoord->clear();
-    planeCaloHits->pWireCoord->clear();
-    planeCaloHits->pElectromagneticEnergy->clear();
-    planeCaloHits->pHadronicEnergy->clear();
+    std::cout << "MyTrackShowerIdAlgorithm: Getting calo hit info for " << hitType << std::endl;
+    viewHits->pXCoord->clear();
+    viewHits->pZCoord->clear();
+    viewHits->pEnergy->clear();
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
@@ -116,10 +118,9 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     try
     {
         const MCParticle *const pMCParticle(MCParticleHelper::GetMainMCParticle(&caloHitList));
-        const int mcPdgCode(pMCParticle->GetParticleId());
-        const int isTrack((E_MINUS != std::abs(mcPdgCode)) && (PHOTON != std::abs(mcPdgCode)));
-
-        std::cout << "Got a MCParticle (for this view), PDG code " << mcPdgCode << ", isTrack " << isTrack << std::endl;
+        viewHits->mcPdgCode = pMCParticle->GetParticleId();
+        const bool isTrack((E_MINUS != std::abs(viewHits->mcPdgCode)) && (PHOTON != std::abs(viewHits->mcPdgCode)));
+        std::cout << "MyTrackShowerIdAlgorithm: Got a MCParticle (for this view), PDG code " << viewHits->mcPdgCode << ", isTrack " << isTrack << std::endl;
     }
     catch (const StatusCodeException &)
     {
@@ -129,19 +130,23 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
 
-        planeCaloHits->pDriftCoord->push_back(positionVector.GetX());
-        planeCaloHits->pWireCoord->push_back(positionVector.GetZ());
-        planeCaloHits->pElectromagneticEnergy->push_back(caloHit->GetElectromagneticEnergy());
-        planeCaloHits->pHadronicEnergy->push_back(caloHit->GetHadronicEnergy());
-        planeCaloHits->nHits++;
+        viewHits->pXCoord->push_back(positionVector.GetX());
+        if (hitType == TPC_3D) // If hits are 3D we get the Y coordinate
+        {
+            viewHits->pYCoord->push_back(positionVector.GetY());
+        }
+        viewHits->pZCoord->push_back(positionVector.GetZ());
+        viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
+        viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
     }
 }
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
-    m_UCaloHits{0,{},{},{},{}},
-    m_VCaloHits{0,{},{},{},{}},
-    m_WCaloHits{0,{},{},{},{}}
+    m_UViewHits{{},{},{},{},{},0},
+    m_VViewHits{{},{},{},{},{},0},
+    m_WViewHits{{},{},{},{},{},0},
+    m_ThreeDViewHits{{},{},{},{},{},0}
 {
 }
 
@@ -163,18 +168,18 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
     }
     
     delete m_pTFile;
-    delete m_UCaloHits.pDriftCoord;
-    delete m_UCaloHits.pWireCoord;
-    delete m_UCaloHits.pElectromagneticEnergy;
-    delete m_UCaloHits.pHadronicEnergy;
-    delete m_VCaloHits.pDriftCoord;
-    delete m_VCaloHits.pWireCoord;
-    delete m_VCaloHits.pElectromagneticEnergy;
-    delete m_VCaloHits.pHadronicEnergy;
-    delete m_WCaloHits.pDriftCoord;
-    delete m_WCaloHits.pWireCoord;
-    delete m_WCaloHits.pElectromagneticEnergy;
-    delete m_WCaloHits.pHadronicEnergy;
+    delete m_UViewHits.pXCoord;
+    delete m_UViewHits.pZCoord;
+    delete m_UViewHits.pEnergy;
+    delete m_UViewHits.pXCoordError;
+    delete m_VViewHits.pXCoord;
+    delete m_VViewHits.pZCoord;
+    delete m_VViewHits.pEnergy;
+    delete m_UViewHits.pXCoordError;
+    delete m_WViewHits.pXCoord;
+    delete m_WViewHits.pZCoord;
+    delete m_WViewHits.pEnergy;
+    delete m_UViewHits.pXCoordError;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -187,55 +192,77 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 
     // Open/create tree file
     std::cout <<  "MyTrackShowerIdAlgorithm: Opening tree file." << std::endl;
-    m_pTFile = new TFile(m_fileName.c_str(), "UPDATE");
-    m_pPfoTree = (TTree*)m_pTFile->Get(m_treeName.c_str());
-    if (!m_pPfoTree)
-    {
-        std::cout <<  "MyTrackShowerIdAlgorithm: PFO tree not found, creating a new one." << std::endl;
-        m_pPfoTree = new TTree("PFO","A PFO tree.");
+    m_pTFile = new TFile(m_fileName.c_str(), "RECREATE");
+    //m_pPfoTree = (TTree*)m_pTFile->Get(m_treeName.c_str());
+    //if (!m_pPfoTree)
+    //{
+    //    std::cout <<  "MyTrackShowerIdAlgorithm: PFO tree not found, creating a new one." << std::endl;
+        m_pPfoTree = new TTree(m_treeName.c_str(), "A tree of PFOs.");
         m_pPfoTree->Branch("EventId", &m_EventId);
+
+        // PFO identification + relations
         m_pPfoTree->Branch("PfoId", &m_PfoId);
 	m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->Branch("DriftCoordU",  &(m_UCaloHits.pDriftCoord));
-        m_pPfoTree->Branch("WireCoordU",  &(m_UCaloHits.pWireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyU",  &(m_UCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyU",  &(m_UCaloHits.pHadronicEnergy));
-        m_pPfoTree->Branch("DriftCoordV",  &(m_VCaloHits.pDriftCoord));
-        m_pPfoTree->Branch("WireCoordV",  &(m_VCaloHits.pWireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyV",  &(m_VCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyV",  &(m_VCaloHits.pHadronicEnergy));
-        m_pPfoTree->Branch("DriftCoordW",  &(m_WCaloHits.pDriftCoord));
-        m_pPfoTree->Branch("WireCoordW",  &(m_WCaloHits.pWireCoord));
-        m_pPfoTree->Branch("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->Branch("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
+
+        // U view
+        m_pPfoTree->Branch("DriftCoordU",  &(m_UViewHits.pXCoord));
+        m_pPfoTree->Branch("DriftCoordErrorU",  &(m_UViewHits.pXCoordError));
+        m_pPfoTree->Branch("WireCoordU",  &(m_UViewHits.pZCoord));
+        m_pPfoTree->Branch("EnergyU",  &(m_UViewHits.pEnergy));
+        m_pPfoTree->Branch("MCPdgCodeU",  &(m_UViewHits.mcPdgCode));
+
+        // V view
+        m_pPfoTree->Branch("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
+        m_pPfoTree->Branch("DriftCoordErrorV",  &(m_VViewHits.pXCoordError));
+        m_pPfoTree->Branch("WireCoordV",  &(m_VViewHits.pZCoord));
+        m_pPfoTree->Branch("EnergyV",  &(m_VViewHits.pEnergy));
+        m_pPfoTree->Branch("DriftCoordV",  &(m_VViewHits.pXCoord));
+
+        // W view
+        m_pPfoTree->Branch("DriftCoordW",  &(m_WViewHits.pXCoord));
+        m_pPfoTree->Branch("DriftCoordErrorW",  &(m_WViewHits.pXCoordError));
+        m_pPfoTree->Branch("WireCoordW",  &(m_WViewHits.pZCoord));
+        m_pPfoTree->Branch("EnergyW",  &(m_WViewHits.pEnergy));
+        m_pPfoTree->Branch("MCPdgCodeW",  &(m_WViewHits.mcPdgCode));
+
+        // 3D view
+        m_pPfoTree->Branch("XCoordThreeD",  &(m_ThreeDViewHits.pXCoord));
+        m_pPfoTree->Branch("YCoordThreeD",  &(m_ThreeDViewHits.pYCoord));
+        m_pPfoTree->Branch("ZCoordThreeD",  &(m_ThreeDViewHits.pZCoord));
+        m_pPfoTree->Branch("EnergyThreeD",  &(m_ThreeDViewHits.pEnergy));
         m_pPfoTree->Branch("Vertex",  &m_Vertex, "m_Vertex[3]/F");
-    }
-    else
-    {
+
+    //}
+    /*else
+    //{
        // TODO: Set m_EventId such that it is equal to next unused event number (won't be zero when events are already in the file)
 	
         std::cout <<  "MyTrackShowerIdAlgorithm: Found an existing tree, already containing " << m_EventId << " events." << std::endl;
         m_pPfoTree->SetBranchAddress("EventId", &m_EventId);
         m_pPfoTree->SetBranchAddress("PfoId", &m_PfoId);
-        m_pPfoTree->SetBranchAddress("ParentPfoId", &m_ParentPfoId);
+	m_pPfoTree->SetBranchAddress("ParentPfoId", &m_ParentPfoId);
         m_pPfoTree->SetBranchAddress("DaughterPfoIds", &m_pDaughterPfoIds);
         m_pPfoTree->SetBranchAddress("HierarchyTier",  &m_HierarchyTier);
-        m_pPfoTree->SetBranchAddress("DriftCoordU",  &(m_UCaloHits.pDriftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordU",  &(m_UCaloHits.pWireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyU",  &(m_UCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyU",  &(m_UCaloHits.pHadronicEnergy));
-        m_pPfoTree->SetBranchAddress("DriftCoordV",  &(m_VCaloHits.pDriftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordV",  &(m_VCaloHits.pWireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyV",  &(m_VCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyV",  &(m_VCaloHits.pHadronicEnergy));
-        m_pPfoTree->SetBranchAddress("DriftCoordW",  &(m_WCaloHits.pDriftCoord));
-        m_pPfoTree->SetBranchAddress("WireCoordW",  &(m_WCaloHits.pWireCoord));
-        m_pPfoTree->SetBranchAddress("ElectromagneticEnergyW",  &(m_WCaloHits.pElectromagneticEnergy));
-        m_pPfoTree->SetBranchAddress("HadronicEnergyW",  &(m_WCaloHits.pHadronicEnergy));
+        m_pPfoTree->SetBranchAddress("DriftCoordU",  &(m_UViewHits.pXCoord));
+        m_pPfoTree->SetBranchAddress("DriftCoordV",  &(m_VViewHits.pXCoord));
+        m_pPfoTree->SetBranchAddress("DriftCoordW",  &(m_WViewHits.pXCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordU",  &(m_UViewHits.pZCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordV",  &(m_VViewHits.pZCoord));
+        m_pPfoTree->SetBranchAddress("WireCoordW",  &(m_WViewHits.pZCoord));
+        m_pPfoTree->SetBranchAddress("EnergyU",  &(m_UViewHits.pEnergy));
+        m_pPfoTree->SetBranchAddress("EnergyV",  &(m_VViewHits.pEnergy));
+        m_pPfoTree->SetBranchAddress("EnergyW",  &(m_WViewHits.pEnergy));
+        m_pPfoTree->SetBranchAddress("MCPdgCodeU",  &(m_UViewHits.mcPdgCode));
+        m_pPfoTree->SetBranchAddress("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
+        m_pPfoTree->SetBranchAddress("MCPdgCodeW",  &(m_WViewHits.mcPdgCode));
+        m_pPfoTree->SetBranchAddress("DriftCoordErrorU",  &(m_UViewHits.pXCoordError));
+        m_pPfoTree->SetBranchAddress("DriftCoordErrorV",  &(m_VViewHits.pXCoordError));
+        m_pPfoTree->SetBranchAddress("DriftCoordErrorW",  &(m_WViewHits.pXCoordError));
         m_pPfoTree->SetBranchAddress("Vertex",  &m_Vertex);
     }
+    */
 
     return STATUS_CODE_SUCCESS;
 }
