@@ -87,7 +87,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
-    this->GetCaloHitInfo(pPfo, TPC_3D, &m_WViewHits);
+    //this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
     const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
     const CartesianVector &vertexPosition(vertex->GetPosition());
     m_Vertex[0] = vertexPosition.GetX();
@@ -98,7 +98,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     pfosWritten += 1;
 
     // Delete any locally created objects
-    delete m_pDaughterPfoIds;
+    //delete m_pDaughterPfoIds;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
@@ -107,9 +107,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     HitType hitType,
     ViewHits *viewHits)
 {
-    std::cout << "MyTrackShowerIdAlgorithm: Getting calo hit info for " << hitType << std::endl;
     viewHits->pXCoord->clear();
+    viewHits->pYCoord->clear();
     viewHits->pZCoord->clear();
+    viewHits->pXCoordError->clear();
     viewHits->pEnergy->clear();
 
     CaloHitList caloHitList;
@@ -131,10 +132,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         const CartesianVector &positionVector(caloHit->GetPositionVector());
 
         viewHits->pXCoord->push_back(positionVector.GetX());
-        if (hitType == TPC_3D) // If hits are 3D we get the Y coordinate
-        {
-            viewHits->pYCoord->push_back(positionVector.GetY());
-        }
+        //if (hitType == TPC_3D) // If hits are 3D we get the Y coordinate
+        //{
+        //    viewHits->pMCoord->push_back(positionVector.GetY());
+        //}
         viewHits->pZCoord->push_back(positionVector.GetZ());
         viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
         viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
@@ -169,17 +170,20 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
     
     delete m_pTFile;
     delete m_UViewHits.pXCoord;
+    //delete m_UViewHits.pYCoord;
     delete m_UViewHits.pZCoord;
     delete m_UViewHits.pEnergy;
     delete m_UViewHits.pXCoordError;
     delete m_VViewHits.pXCoord;
+    //delete m_VViewHits.pYCoord;
     delete m_VViewHits.pZCoord;
     delete m_VViewHits.pEnergy;
-    delete m_UViewHits.pXCoordError;
+    delete m_VViewHits.pXCoordError;
     delete m_WViewHits.pXCoord;
+    //delete m_WViewHits.pYCoord;
     delete m_WViewHits.pZCoord;
     delete m_WViewHits.pEnergy;
-    delete m_UViewHits.pXCoordError;
+    delete m_WViewHits.pXCoordError;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -207,18 +211,21 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
         m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
 
         // U view
+        std::cout << "MyTrackShowerIdAlgorithm: X coord pointer before " << m_UViewHits.pXCoord << std::endl; // ROOT is initialising the pointers! Need to initialise it ourselves.
         m_pPfoTree->Branch("DriftCoordU",  &(m_UViewHits.pXCoord));
+        std::cout << "MyTrackShowerIdAlgorithm: X coord pointer after " << m_UViewHits.pXCoord << std::endl;
+
         m_pPfoTree->Branch("DriftCoordErrorU",  &(m_UViewHits.pXCoordError));
         m_pPfoTree->Branch("WireCoordU",  &(m_UViewHits.pZCoord));
         m_pPfoTree->Branch("EnergyU",  &(m_UViewHits.pEnergy));
         m_pPfoTree->Branch("MCPdgCodeU",  &(m_UViewHits.mcPdgCode));
 
         // V view
-        m_pPfoTree->Branch("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
+        m_pPfoTree->Branch("DriftCoordV",  &(m_VViewHits.pXCoord));
         m_pPfoTree->Branch("DriftCoordErrorV",  &(m_VViewHits.pXCoordError));
         m_pPfoTree->Branch("WireCoordV",  &(m_VViewHits.pZCoord));
         m_pPfoTree->Branch("EnergyV",  &(m_VViewHits.pEnergy));
-        m_pPfoTree->Branch("DriftCoordV",  &(m_VViewHits.pXCoord));
+        m_pPfoTree->Branch("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
 
         // W view
         m_pPfoTree->Branch("DriftCoordW",  &(m_WViewHits.pXCoord));
