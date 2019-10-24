@@ -16,16 +16,15 @@ using namespace pandora;
 
 StatusCode MyTrackShowerIdAlgorithm::Run()
 {
-    // Algorithm code here
     std::cout <<  "MyTrackShowerIdAlgorithm: Processing next event, eventId " << m_EventId << std::endl;
 
     const PfoList *pPfoList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
     PfoList neutrinoPfos;
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
-    if (neutrinoPfos.size() == 1) // Write this event if there is exactly one neutrino PFO in the event (which there should be)
+    if (neutrinoPfos.size()) // Write this event if there is a neutrino PFO
     {
-        this->WritePfo(neutrinoPfos.front());
+        this->WritePfo(neutrinoPfos.front()); // there should be only one PFO in the list
     }
     else
     {
@@ -62,6 +61,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
         daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
         pfosWritten += this->WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
+
     std::cout << "MyTrackShowerIdAlgorithm: Writing a PFO to the tree, pfoId " << pfoId << ", hierarchyTier " << hierarchyTier << ", parentPfoId " << parentPfoId;
     if (daughterPfoIds.size() > 0)
     {
@@ -158,10 +158,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
-    m_UViewHits{new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),0},
-    m_VViewHits{new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),0},
-    m_WViewHits{new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),0},
-    m_ThreeDViewHits{new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),new std::vector<float>(),0}
+    m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
+    m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
+    m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
+    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0}
 {
 }
 
