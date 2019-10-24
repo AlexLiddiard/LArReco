@@ -17,16 +17,19 @@ using namespace pandora;
 StatusCode MyTrackShowerIdAlgorithm::Run()
 {
     // Algorithm code here
-    std::cout <<  "MyTrackShowerIdAlgorithm: Hello World!" << std::endl;
+    std::cout <<  "MyTrackShowerIdAlgorithm: Processing next event, eventId " << m_EventId << std::endl;
 
     const PfoList *pPfoList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
-    
     PfoList neutrinoPfos;
     LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
-    if (neutrinoPfos.size() == 1) // White this event if there is exactly one neutrino PFO in the event (which there should be)
+    if (neutrinoPfos.size() == 1) // Write this event if there is exactly one neutrino PFO in the event (which there should be)
     {
         this->WritePfo(neutrinoPfos.front());
+    }
+    else
+    {
+        std::cout << "MyTrackShowerIdAlgorithm: The event has no reconstructed neutrinos!" << std::endl;
     }
 
     m_EventId++;
@@ -83,17 +86,22 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
         this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
         this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
     }
-    const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
-    const CartesianVector &vertexPosition(vertex->GetPosition());
-    m_Vertex[0] = vertexPosition.GetX();
-    m_Vertex[1] = vertexPosition.GetY();
-    m_Vertex[2] = vertexPosition.GetZ();
+
+    try
+    {
+        const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
+        const CartesianVector &vertexPosition(vertex->GetPosition());
+        m_Vertex[0] = vertexPosition.GetX();
+        m_Vertex[1] = vertexPosition.GetY();
+        m_Vertex[2] = vertexPosition.GetZ();
+    }
+    catch (const StatusCodeException &)
+    {
+        std::cout << "MyTrackShowerIdAlgorithm: A vertex was not found for this PFO!" << std::endl;
+    }
 
     m_pPfoTree->Fill(); // Fill the tree
     pfosWritten += 1;
-
-    // Delete any locally created objects
-    //delete m_pDaughterPfoIds;
     return pfosWritten;	// return pfosWritten += 1.
 }
 
@@ -133,7 +141,6 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     {
     }
 
-    /*
     for (const CaloHit *const caloHit : caloHitList)
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
@@ -147,7 +154,6 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
         viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
     }
-    */
 }
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
@@ -176,6 +182,7 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
         std::cout << "MyTrackShowerIdAlgorithm: Unable to write tree!" << std::endl;
     }
     
+    // Clean up
     delete m_pTFile;
     delete m_UViewHits.pXCoord;
     delete m_UViewHits.pYCoord;
