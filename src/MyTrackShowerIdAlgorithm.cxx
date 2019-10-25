@@ -79,13 +79,11 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     m_HierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
     
     // Write all other properties of pPFO to ROOT tree
-    if (pfoId) // Skip getting calohit info for the neutrino PFO (pfoId = 0)
-    {
-        this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UViewHits);
-        this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VViewHits);
-        this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
-        this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
-    }
+
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
 
     try
     {
