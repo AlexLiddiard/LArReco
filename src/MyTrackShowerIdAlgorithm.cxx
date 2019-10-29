@@ -9,6 +9,7 @@
 #include "Pandora/AlgorithmHeaders.h"
 #include "MyTrackShowerIdAlgorithm.h"
 #include "larpandoracontent/LArHelpers/LArPfoHelper.h"
+#include "larpandoracontent/LArPersistency/EventReadingAlgorithm.h"
 
 using namespace lar_content;
 
@@ -154,6 +155,13 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     }
 }
 
+std::string MyTrackShowerIdAlgorithm::GetFileName(const std::string& filePath)
+{
+    std::size_t start = filePath.find_last_of("/\\") + 1;
+    std::size_t end = filePath.find_last_of(".");
+    return filePath.substr(start, end - start);
+}
+
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
     m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
@@ -205,7 +213,17 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 {
     // Read settings from xml file here
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName));
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
+    //const StatusCode statusCode(XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
+    //if (STATUS_CODE_SUCCESS != statusCode)
+    //{
+
+        EventReadingAlgorithm::ExternalEventReadingParameters *pExternalParameters(nullptr);
+        pExternalParameters = dynamic_cast<EventReadingAlgorithm::ExternalEventReadingParameters*>(this->GetExternalParameters());
+        //std::size_t start = pExternalParameters->m_eventFileNameList.find_last_of("/\\");
+        //std::size_t end = pExternalParameters->m_eventFileNameList.find_last_of(".");
+        m_fileName = this->GetFileName(pExternalParameters->m_eventFileNameList).append(".root"); // This assumes there is only one file being processed.
+        std::cout << "File name: " << m_fileName << std::endl;
+    //}
 
     // Open/create tree file
     std::cout <<  "MyTrackShowerIdAlgorithm: Creating tree file." << std::endl;

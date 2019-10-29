@@ -8,7 +8,7 @@
 #ifndef MY_TRACK_SHOWER_ID_ALGORITHM_H
 #define MY_TRACK_SHOWER_ID_ALGORITHM_H 1
 
-#include "Pandora/Algorithm.h"
+#include "Pandora/ExternallyConfiguredAlgorithm.h"
 #include "TFile.h"
 #include "TTree.h"
 
@@ -26,7 +26,7 @@ struct ViewHits
 /**
  *  @brief  MyTrackShowerIdAlgorithm class
  */
-class MyTrackShowerIdAlgorithm : public pandora::Algorithm
+class MyTrackShowerIdAlgorithm : public pandora::ExternallyConfiguredAlgorithm
 {
 public:
     /**
@@ -53,6 +53,7 @@ private:
 
     int WritePfo(const pandora::ParticleFlowObject *const pPfo, int pfoId = 0, int parentPfoId = -1, int hierarchyTier = 0);
     void GetCaloHitInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, ViewHits *vHits);
+    std::string GetFileName(const std::string& filePath);
 
     // Member variables here
     std::string				m_treeName; 		///< Name of output tree

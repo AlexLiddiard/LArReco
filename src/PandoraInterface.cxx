@@ -270,11 +270,15 @@ bool ProcessRecoOption(const std::string &recoOption, Parameters &parameters)
 
 void ProcessExternalParameters(const Parameters &parameters, const Pandora *const pPandora)
 {
-    auto *const pEventReadingParameters = new lar_content::EventReadingAlgorithm::ExternalEventReadingParameters;
+    auto pEventReadingParameters = new lar_content::EventReadingAlgorithm::ExternalEventReadingParameters;
     pEventReadingParameters->m_geometryFileName = parameters.m_geometryFileName;
     pEventReadingParameters->m_eventFileNameList = parameters.m_eventFileNameList;
     if (parameters.m_nEventsToSkip.IsInitialized()) pEventReadingParameters->m_skipToEvent = parameters.m_nEventsToSkip.Get();
     PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraApi::SetExternalParameters(*pPandora, "LArEventReading", pEventReadingParameters));
+
+    pEventReadingParameters = new lar_content::EventReadingAlgorithm::ExternalEventReadingParameters;
+    pEventReadingParameters->m_eventFileNameList = parameters.m_eventFileNameList;
+    PANDORA_THROW_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraApi::SetExternalParameters(*pPandora, "MyTrackShowerIdAlgorithm", pEventReadingParameters));
 
     auto *const pEventSteeringParameters = new lar_content::MasterAlgorithm::ExternalSteeringParameters;
     pEventSteeringParameters->m_shouldRunAllHitsCosmicReco = parameters.m_shouldRunAllHitsCosmicReco;
