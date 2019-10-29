@@ -56,7 +56,6 @@
 -->
     <algorithm type = "MyTrackShowerIdAlgorithm">
         <OutputTree>PFOs</OutputTree>
-        <OutputFile>PFOs.root</OutputFile>
     </algorithm>
 
     <algorithm type = "LArEventValidation">

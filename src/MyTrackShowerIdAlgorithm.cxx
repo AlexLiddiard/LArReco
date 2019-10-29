@@ -155,6 +155,7 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     }
 }
 
+// Gets a file name (without extension) from a file path 
 std::string MyTrackShowerIdAlgorithm::GetFileName(const std::string& filePath)
 {
     std::size_t start = filePath.find_last_of("/\\") + 1;
@@ -213,17 +214,14 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 {
     // Read settings from xml file here
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName));
-    //const StatusCode statusCode(XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
-    //if (STATUS_CODE_SUCCESS != statusCode)
-    //{
-
+    const StatusCode statusCode(XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
+    if (STATUS_CODE_SUCCESS != statusCode) // If there is no name given, use the same name as the input file (with extension changed to .root)
+    {
         EventReadingAlgorithm::ExternalEventReadingParameters *pExternalParameters(nullptr);
         pExternalParameters = dynamic_cast<EventReadingAlgorithm::ExternalEventReadingParameters*>(this->GetExternalParameters());
-        //std::size_t start = pExternalParameters->m_eventFileNameList.find_last_of("/\\");
-        //std::size_t end = pExternalParameters->m_eventFileNameList.find_last_of(".");
-        m_fileName = this->GetFileName(pExternalParameters->m_eventFileNameList).append(".root"); // This assumes there is only one file being processed.
+        m_fileName = this->GetFileName(pExternalParameters->m_eventFileNameList).append(".root"); // Assumes there is a single event file being processed (otherwise it will use the name of the last file)
         std::cout << "File name: " << m_fileName << std::endl;
-    //}
+    }
 
     // Open/create tree file
     std::cout <<  "MyTrackShowerIdAlgorithm: Creating tree file." << std::endl;

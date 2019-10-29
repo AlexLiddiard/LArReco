@@ -196,7 +196,7 @@ score = 0
 count = 0
 for eventPfos in events:
 	for pfo in eventPfos:
-		if pfo.pfoId == 0 or TrulyIsShower(pfo) == 1:
+		if pfo.pfoId == 0:
 			continue
 		count += 1
 		print(str(pfo), end = " ")
