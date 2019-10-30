@@ -1,0 +1,18 @@
+Algorithm 1
+Width	Threshold	Accuracy
+0.5	0.77		78.97 (U)
+0.5	0.77		81.19 (V)
+0.5	0.88		83.69 (W)
+0.45	0.75		84.12 (W)
+
+
+Algorithm 2
+Maxdist	MaxChains	Accuracy
+3.5	8		85.41 (W)
+3	7		85.41 (W)
+2.5	7		85.84 (W)
+
+2	7		86.27 (W)
+1.9	7		86.27 (W)
+1.7	7		86.05 (W)
+1.6	7		86.05 (W)
