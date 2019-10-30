@@ -78,5 +78,5 @@ def ReadRootFile(filepath):
 			eventPfos = [PfoBeingRead]
 			currentEventId = pfo.EventId
 	# The for loop does not append the last event to the array
-	eventPfos.append(eventPfos)
+	events.append(eventPfos)
 	return events
