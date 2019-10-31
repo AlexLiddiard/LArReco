@@ -38,12 +38,21 @@ class PfoClass(object):
 		return str(self)
 
 	# Uses the PDG codes of each wire plane to check if the PFO truly is a track or shower
-	def TrulyIsShower(self):
+	def TrueType(self):
 		absPDGs = [abs(self.monteCarloPDGU), abs(self.monteCarloPDGV), abs(self.monteCarloPDGW)]
-		if absPDGs.count(11) > 1:
+		if absPDGs.count(11) > 1:				# Is a shower if more than two views have majority of hits from electrons.
 			return 1
-		else:
+		elif absPDGs.count(0) == 0:				# Is a track if more than two views have majority of hits from other particle types.
 			return 0
+		elif absPDGs.count(0) == 1:				# The case with two conflicting PDGs. We just use that PDG. Use the PDG from W if available, otherwise V. 
+			if absPDGs[2] != 0:
+				return 1 if absPDGs[2] == 11 else 0
+			else:
+				return 1 if absPDGs[1] == 11 else 0
+		elif absPDGs.count(0) == 2:				# The case with only a PDG from one view. We just use that PDG.
+			return absPDGs.count(11)
+		else:							# No PDG info available
+			return -1
 
 # This function inserts a pfo into an event. It also ensures that the list is ordered by the pfo ID.
 def AddPfoToEvent(eventPfos, pfo):

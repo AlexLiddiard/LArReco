@@ -96,12 +96,17 @@ def RunAlgorithm(pfo):
 
 #'''
 	showerStats = (showerInViewU[0], showerInViewV[0], showerInViewW[0])
-	if (showerStats.count(1) > 1): 					# A good shower score
+	
+
+
+	if (showerStats.count(1) > 1): 		# A good shower score
 		return 1
-	elif (showerStats.count(0) > 1): 				# A good track score
+	elif showerStats.count(-1) == 0: 	# A good track score
 		return 0
-	elif showerStats.count(-1) == 2 and showerStats[2] != -1:	# The case where only info from one plane. The W plane alone gives adequate info for a track/shower decision. 
-		return showerStats[2]
-	else: # Not enough info to decide
+	elif showerStats.count(-1) == 1:	# The case whith conflicting info from two views. We favour the view with higher individual accuracy (W, V, U in descending order).
+		return showerStats[2] if showerStats[2] != -1 else showerStats[1]
+	elif showerStats.count(-1) == 2:	# The case with info from one view. We just take the result of that view.
+		return showerStats.count(1)
+	else: 					# No info from any views, cannot decide.
 		return -1
 #'''

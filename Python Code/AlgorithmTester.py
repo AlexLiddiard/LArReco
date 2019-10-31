@@ -28,7 +28,7 @@ if __name__ == "__main__":
 					print("Result: U")
 				
 				if result != -1:
-					if result == pfo.TrulyIsShower():
+					if result == pfo.TrueType():
 						print("Correct")
 						score += 1
 					else:
