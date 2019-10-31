@@ -44,7 +44,7 @@ class PfoClass(object):
 			return 1
 		elif absPDGs.count(0) == 0:				# Is a track if more than two views have majority of hits from other particle types.
 			return 0
-		elif absPDGs.count(0) == 1:				# The case with two conflicting PDGs. We just use that PDG. Use the PDG from W if available, otherwise V. 
+		elif absPDGs.count(0) == 1:				# The case with two conflicting PDGs. Use the PDG from W if available, otherwise V. 
 			if absPDGs[2] != 0:
 				return 1 if absPDGs[2] == 11 else 0
 			else:
