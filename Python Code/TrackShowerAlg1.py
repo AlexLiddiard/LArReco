@@ -5,14 +5,14 @@ import math
 # Algorithm parameters
 minBins = 2
 
-binWidthU = 0.5
-stdThresholdU = 0.77
+binWidthU = 0.4
+stdThresholdU = 0.75
 
-binWidthV = 0.5
-stdThresholdV = 0.77
+binWidthV = 0.42
+stdThresholdV = 0.74
 
 binWidthW = 0.45
-stdThresholdW = 0.75
+stdThresholdW = 0.74
 
 
 # This function counts how many numbers fall in a set of bins of a given width. Empty bins are ignored.
@@ -92,7 +92,7 @@ def RunAlgorithm(pfo):
 	showerInViewW = ShowerInView(pfo.driftCoordW, pfo.wireCoordW, stdThresholdW, binWidthW)
 	print("std: %.3f %.3f %.3f" % (showerInViewU[1], showerInViewV[1], showerInViewW[1]), end = " ")
 
-	#return showerInViewW[0] # For testing a single view
+	#return showerInViewU[0] # For testing a single view
 
 #'''
 	showerStats = (showerInViewU[0], showerInViewV[0], showerInViewW[0])
