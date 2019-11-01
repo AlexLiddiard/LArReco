@@ -11,8 +11,8 @@ if __name__ == "__main__":
 	sCorrect = 0
 	sIncorrect = 0
 	sUnsure = 0
-	#directory = "/home/alexliddiard/Desktop/Pandora/LArReco/ROOT Files/"
-	directory = input("Enter a folder path containing ROOT files: ")
+	directory = "/home/alexliddiard/Desktop/Pandora/LArReco/ROOT Files/"
+	#directory = input("Enter a folder path containing ROOT files: ")
 	fileList = os.listdir(directory)
 
 	for fileName in fileList:
@@ -22,6 +22,7 @@ if __name__ == "__main__":
 		for eventPfos in events:
 			for pfo in eventPfos:
 				pfoTrueType = pfo.TrueType()
+
 				if pfo.pfoId == 0 or pfoTrueType == -1:
 					continue
 
@@ -29,8 +30,8 @@ if __name__ == "__main__":
 
 				# Algorithms
 				#result = TrackShowerAlg0.RunAlgorithm(pfo)
-				result = TrackShowerAlg1.RunAlgorithm(pfo)
-				#result = TrackShowerAlg2.RunAlgorithm(pfo)
+				#result = TrackShowerAlg1.RunAlgorithm(pfo)
+				result = TrackShowerAlg2.RunAlgorithm(pfo)
 
 				if result == 1:
 					print("Result: S", end=" ")
@@ -53,8 +54,8 @@ if __name__ == "__main__":
 				else:
 					print("Incorrect")
 
-	print("Overall accuracy: %.2f%%" % (100 * (tCorrect + sCorrect) / (tCorrect + tIncorrect + sCorrect + sIncorrect)))
-	print("Track accuracy: %.2f%%" % (100 * tCorrect / (tCorrect + tIncorrect)))
-	print("Shower accuracy: %.2f%%" % (100 * sCorrect / (sCorrect + sIncorrect)))
+	print("Overall efficiency: %.2f%%" % (100 * (tCorrect + sCorrect) / (tCorrect + tIncorrect + sCorrect + sIncorrect)))
+	print("Track efficiency: %.2f%%" % (100 * tCorrect / (tCorrect + tIncorrect)))
+	print("Shower efficiency: %.2f%%" % (100 * sCorrect / (sCorrect + sIncorrect)))
 	print("Track purity: %.2f%%" % (100 * tCorrect / (tCorrect + sIncorrect - sUnsure)))
 	print("Shower purity: %.2f%%" % (100 * sCorrect / (sCorrect + tIncorrect - tUnsure)))

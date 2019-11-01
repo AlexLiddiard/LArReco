@@ -17,7 +17,9 @@ def ShowerInView(driftCoord, wireCoord, rThreshold):
 	else:
 		return 0, rSquared
 
-# R squared formula (absolute value)
+# Square of the Pearson product-moment correlation
+# https://en.wikipedia.org/wiki/Residual_sum_of_squares
+# It is a normalised measure of the sum of the residual squares (of the least squares regression line).
 def RSquared(xCoords, yCoords):
 	Sxy = 0
 	Sxx = 0

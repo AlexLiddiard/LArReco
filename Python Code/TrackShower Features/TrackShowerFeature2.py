@@ -1,29 +1,9 @@
-# This module is for track/shower algorithm #2
-import statistics
+# This module is for track/shower feature #2
 import math
 
 # Algorithm parameters
-#maxSeparationU = 2
-chainThresholdU = 7
-rectWidthU = 1.5
-rectHeightU = 1.5
-crumpleConstU = 1
-
-#maxSeparationV = 2
-chainThresholdV = 7
-rectWidthV = 1.5
-rectHeightV = 1.5
-crumpleConstV = 1
-
-#maxSeparationW = 2
-chainThresholdW = 0.5
-rectWidthW = 5
-rectHeightW = 5
-crumpleConstW = 5
-
-#maxSeparationU2 = maxSeparationU * maxSeparationU
-#maxSeparationV2 = maxSeparationV * maxSeparationV
-#maxSeparationW2 = maxSeparationW * maxSeparationW
+rectWidth = 5
+rectHeight = 5
 
 # Finds the nearest neighbour of a 2D point (out of a list of points)
 # It's quite slow
@@ -93,6 +73,7 @@ def CreatePointChain(pointListX, pointListY, maxSeparation2):
 			nearbyPoints = False
 	return chainX, chainY
 
+# Using a square instead of a circle to limit the max separation, a bit more efficient
 def CreatePointChain2(pointListX, pointListY, rectWidth, rectHeight):
 	currentX = pointListX.pop(0)
 	currentY = pointListY.pop(0)
@@ -112,42 +93,21 @@ def CreatePointChain2(pointListX, pointListY, rectWidth, rectHeight):
 			nearbyPoints = False
 	return chainX, chainY, chainLength
 
-def ShowerInView(driftCoord, wireCoord, chainThreshold, rectWidth, rectHeight, crumpleConst):		
-	chainScore = 0
+def GetChainInfo(driftCoord, wireCoord, chainThreshold, rectWidth, rectHeight):		
+	chainCount = 0
+	sumLengthRatios = 0
 	while driftCoord:	# While pfo hit list is not empty
 		chainX, chainY, chainLength = CreatePointChain2(driftCoord, wireCoord, rectWidth, rectHeight)
 		if len(chainX) > 1:
-			crumpleFactor = math.sqrt(Distance2(chainX[0], chainY[0], chainX[-1], chainY[-1])) / chainLength
+			lengthRatio = math.sqrt(Distance2(chainX[0], chainY[0], chainX[-1], chainY[-1])) / chainLength
 		else:
-			crumpleFactor = 1
-		chainScore += 1 - crumpleFactor
+			lengthRatio = 1
+		sumLengthRatios += lengthRatio
+	avgLengthRatio = sumLengthRatios / chainCount
+	return chainCount, avgLengthRatio
 
-	if (chainScore > chainThreshold):
-		return 1, chainScore
-	else:
-		return 0, chainScore
 
 def RunAlgorithm(pfo):
-	# Using only W view
-	showerInViewW = ShowerInView(pfo.driftCoordW, pfo.wireCoordW, chainThresholdW, rectWidthW, rectHeightW, crumpleConstW)
-	print("ChainScore: %.2f" % showerInViewW[1], end = " ")
-	return showerInViewW[0]
-	
-	# Using all three views (slower)
-'''
-	showerStats = []
-	showerInViewU = ShowerInView(pfo.driftCoordU, pfo.wireCoordU, chainCountThresholdU, maxSeparationU2)
-	showerInViewV = ShowerInView(pfo.driftCoordV, pfo.wireCoordV, chainCountThresholdV, maxSeparationV2)
-	showerInViewW = ShowerInView(pfo.driftCoordW, pfo.wireCoordW, chainCountThresholdW, maxSeparationW2)
-	print("ChainCounts: %d %d %d" % (showerInViewU[1], showerInViewV[1], showerInViewW[1]), end = " ")
-
-	showerStats = (showerInViewU[0], showerInViewV[0], showerInViewW[0])
-	if (showerStats.count(1) > 1): 					# A good shower score
-		return 1
-	elif (showerStats.count(0) > 1): 				# A good track score
-		return 0
-	elif showerStats.count(-1) == 2 and showerStats[2] != -1:	# The case where only info from one plane. The W plane alone gives adequate info for a track/shower decision. 
-		return showerStats[2]
-	else: # Not enough info to decide
-		return -1
-'''
+	chainCount, avgLengthRatio = GetChainInfo(pfo.driftCoordW, pfo.wireCoordW, chainThresholdW, rectWidthW, rectHeightW, crumpleConstW)
+	print("chainCount: %.2f avgLengthRatio: %.2f" % (chainCount, avgLengthRatio))
+	return chainCount, avgLengthRatio

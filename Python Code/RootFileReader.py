@@ -36,21 +36,34 @@ class PfoClass(object):
 		return str(self)
 	def __repr__(self):
 		return str(self)
+	
+	def TrueTypeU(self):
+		if self.monteCarloPDGU != 0:
+			return 1 if abs(self.monteCarloPDGU) == 11 else 0
+		else
+			return -1
+	def TrueTypeV(self):
+		if self.monteCarloPDGV != 0:
+			return 1 if abs(self.monteCarloPDGV) == 11 else 0
+		else
+			return -1
+	def TrueTypeW(self):
+		if self.monteCarloPDGW != 0:s
+			return 1 if abs(self.monteCarloPDGW) == 11 else 0
+		else
+			return -1
 
-	# Uses the PDG codes of each wire plane to check if the PFO truly is a track or shower
-	def TrueType(self):
-		absPDGs = [abs(self.monteCarloPDGU), abs(self.monteCarloPDGV), abs(self.monteCarloPDGW)]
-		if absPDGs.count(11) > 1:				# Is a shower if more than two views have majority of hits from electrons.
+	# Uses the PDG codes of all wire plane to check if the PFO truly is a track or shower
+	def TrueTypeCombined(self):
+		absPDGs = [self.TrueTypeU(), self.TrueTypeV(), self.TrueTypeW()]
+		if absPDGs.count(1) > 1:				# Is a shower if more than two views have majority of hits from electrons.
 			return 1
 		elif absPDGs.count(0) == 0:				# Is a track if more than two views have majority of hits from other particle types.
 			return 0
-		elif absPDGs.count(0) == 1:				# The case with two conflicting PDGs. Use the PDG from W if available, otherwise V. 
-			if absPDGs[2] != 0:
-				return 1 if absPDGs[2] == 11 else 0
-			else:
-				return 1 if absPDGs[1] == 11 else 0
-		elif absPDGs.count(0) == 2:				# The case with only a PDG from one view. We just use that PDG.
-			return absPDGs.count(11)
+		elif absPDGs.count(-1) == 1:				# The case with two conflicting PDGs. 
+			return -1
+		elif absPDGs.count(-1) == 2:				# The case with only a PDG from one view. We just use that PDG.
+			return absPDGs.count(1)
 		else:							# No PDG info available
 			return -1
 
