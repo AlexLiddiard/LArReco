@@ -125,6 +125,10 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     viewHits->pZCoord->clear();
     viewHits->pXCoordError->clear();
     viewHits->pEnergy->clear();
+    viewHits->nHitsPfo = 0;
+    viewHits->nHitsMcp = 0;
+    viewHits->nHitsMatch = 0;
+    viewHits->nHitsMatch = 0;
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
@@ -152,6 +156,7 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         viewHits->pZCoord->push_back(positionVector.GetZ());
         viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
         viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
+        viewHits->nHitsPfo++;
     }
 }
 
@@ -165,10 +170,10 @@ std::string MyTrackShowerIdAlgorithm::GetFileName(const std::string& filePath)
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
-    m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
-    m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
-    m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0},
-    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0}
+    m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
+    m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
+    m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
+    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0}
 {
 }
 
@@ -241,6 +246,9 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     m_pPfoTree->Branch("WireCoordU",  &(m_UViewHits.pZCoord));
     m_pPfoTree->Branch("EnergyU",  &(m_UViewHits.pEnergy));
     m_pPfoTree->Branch("MCPdgCodeU",  &(m_UViewHits.mcPdgCode));
+    m_pPfoTree->Branch("nHitsPfoU",  &(m_UViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpU",  &(m_UViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchU",  &(m_UViewHits.nHitsMatch));
 
     // V view
     m_pPfoTree->Branch("DriftCoordV",  &(m_VViewHits.pXCoord));
@@ -248,6 +256,9 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     m_pPfoTree->Branch("WireCoordV",  &(m_VViewHits.pZCoord));
     m_pPfoTree->Branch("EnergyV",  &(m_VViewHits.pEnergy));
     m_pPfoTree->Branch("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
+    m_pPfoTree->Branch("nHitsPfoV",  &(m_VViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpV",  &(m_VViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchV",  &(m_VViewHits.nHitsMatch));
 
     // W view
     m_pPfoTree->Branch("DriftCoordW",  &(m_WViewHits.pXCoord));
@@ -255,6 +266,9 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     m_pPfoTree->Branch("WireCoordW",  &(m_WViewHits.pZCoord));
     m_pPfoTree->Branch("EnergyW",  &(m_WViewHits.pEnergy));
     m_pPfoTree->Branch("MCPdgCodeW",  &(m_WViewHits.mcPdgCode));
+    m_pPfoTree->Branch("nHitsPfoW",  &(m_WViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpW",  &(m_WViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchW",  &(m_WViewHits.nHitsMatch));
 
     // 3D view
     m_pPfoTree->Branch("XCoordThreeD",  &(m_ThreeDViewHits.pXCoord));

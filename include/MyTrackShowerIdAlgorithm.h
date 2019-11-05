@@ -21,6 +21,9 @@ struct ViewHits
     pandora::FloatVector		*pXCoordError;			///< hit x coord error
     pandora::FloatVector		*pEnergy;			///< hit electromagnetic energy
     int					mcPdgCode;			///< truth particle for these hits
+    int					nHitsPfo;			///< total number of pfo hits
+    int					nHitsMatch;			///< number of hits matched with (best matched) Monte Carlo particle
+    int					nHitsMcp;			///< total number of hits for the (best matched) Monte Carlo particle
 };
 
 /**
