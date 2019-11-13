@@ -59,6 +59,9 @@ private:
     std::string GetFileName(const std::string& filePath);
 
     // Member variables here
+    std::string     m_caloHitListName;          ///< Name of input calo hit list
+    std::string     m_mcParticleListName;       ///< Name of input MC particle list
+
     std::string				m_treeName; 		///< Name of output tree
     std::string				m_fileName; 		///< Name of output file
     TFile				*m_pTFile;		///< ROOT tree file
