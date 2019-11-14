@@ -68,8 +68,8 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
                   << " (U: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allHitsInPfo) << ", V: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allHitsInPfo) << ", W: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allHitsInPfo) << ") " << std::endl;
         //const int nHitsInPfoTotal(allHitsInPfo.size()), nHitsInPfoU(LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allHitsInPfo)), nHitsInPfoV(LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allHitsInPfo)), nHitsInPfoW(LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allHitsInPfo));
 
-        CaloHitList wHitsInPfo;
-        LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_W, wHitsInPfo);
+        //CaloHitList wHitsInPfo;
+        //LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_W, wHitsInPfo);
 
         //PandoraMonitoringApi::VisualizeCaloHits(this->GetPandora(), &wHitsInPfo, "WHitsInThisPfo", CYAN);
         //PandoraMonitoringApi::ViewEvent(this->GetPandora());
@@ -83,26 +83,28 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
         {
             const pandora::MCParticle *const pAssociatedMCParticle(mcParticleCaloHitListPair.first);
 
-			const CaloHitList &allMCHits(targetMCParticleToHitsMap.at(pAssociatedMCParticle));
+            const CaloHitList &allMCHits(targetMCParticleToHitsMap.at(pAssociatedMCParticle));
             std::cout << "Associated MCParticle: " << pAssociatedMCParticle->GetParticleId() << ", nTotalHits " << allMCHits.size()
                       << " (U: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits) << ", V: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits) << ", W: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits) << ") " << std::endl;
 
             const CaloHitList &associatedMCHits(mcParticleCaloHitListPair.second);
             
+/*
             CaloHitList associatedMCHitsW;
             for (const CaloHit *const pCaloHit : associatedMCHits)
-			{
+            {
                 if (TPC_VIEW_W == pCaloHit->GetHitType())
                     associatedMCHitsW.push_back(pCaloHit);
             }
+*/
 
             std::cout << "Shared with MCParticle: " << pAssociatedMCParticle->GetParticleId() << ", nSharedHits " << associatedMCHits.size()
                       << " (U: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits) << ", V: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits) << ", W: " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits) << ") " << std::endl;
 
-			// This is the current best matched MCParticle, to be stored
-            std::cout << "associatedMCHits.size() " << associatedMCHits.size() << ", nHitsSharedWithBestMCParticleTotal " << nHitsSharedWithBestMCParticleTotal << ", check " << (static_cast<int>(associatedMCHits.size()) > nHitsSharedWithBestMCParticleTotal) << std::endl;
+            // This is the current best matched MCParticle, to be stored
+            std::cout << "associatedMCHits.size() " << associatedMCHits.size() << ", nHitsSharedWithBestMCParticleTotal " << nHitsSharedWithBestMCParticleTotal << ", check " << associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal) << std::endl;
 
-            if (static_cast<int>(associatedMCHits.size()) > nHitsSharedWithBestMCParticleTotal)
+            if (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal)
             {
                  nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
                  nHitsSharedWithBestMCParticleU = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
