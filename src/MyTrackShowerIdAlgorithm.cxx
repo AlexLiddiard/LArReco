@@ -21,8 +21,6 @@ using namespace pandora;
 
 StatusCode MyTrackShowerIdAlgorithm::Run()
 {
-    LArMCParticleHelper::MCContributionMap targetMCParticleToHitsMap;
-    this->GetCompleteMCParticleMap(targetMCParticleToHitsMap);
     std::cout <<  "MyTrackShowerIdAlgorithm: Processing next event, eventId " << m_EventId << std::endl;
 
     const PfoList *pPfoList(nullptr);
@@ -41,8 +39,14 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
 
     // Mapping target MCParticles -> truth associated Hits
-    //LArMCParticleHelper::MCContributionMap targetMCParticleToHitsMap;
-    //LArMCParticleHelper::SelectReconstructableMCParticles(pMCParticleList, pCaloHitList, LArMCParticleHelper::PrimaryParameters(), LArMCParticleHelper::IsBeamNeutrinoFinalState, targetMCParticleToHitsMap);
+    LArMCParticleHelper::MCContributionMap targetMCParticleToHitsMap;
+    this->GetCompleteMCParticleMap(targetMCParticleToHitsMap);
+
+    // Get Neutrino MCParticle
+    MCParticleList parentMCNuList; 
+    this->GetParentNeutrino(pMCParticleList, parentMCNuList);
+    
+    std::cout << "Found this many parent neutrinos: " << parentMCNuList.size() << std::endl;
 
     LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
     LArMCParticleHelper::GetPfoToReconstructable2DHitsMap(allConnectedPfos, targetMCParticleToHitsMap, pfoToHitsMap);
@@ -134,6 +138,17 @@ int MyTrackShowerIdAlgorithm::GetCompleteMCParticleMap(LArMCParticleHelper::MCCo
     return STATUS_CODE_SUCCESS;
 }
 
+// Function which gets event parent neutrino.
+int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCParticleList, MCParticleList &parentMCNuList){
+    for (const MCParticle *const mCParticle : *pMCParticleList)
+    {
+        if (mCParticle->GetParentList().empty() && LArMCParticleHelper::IsNeutrino(mCParticle))
+        {
+            parentMCNuList.push_back(mCParticle);
+        }
+    }
+    return STATUS_CODE_SUCCESS;
+}
 
 /*
 Inputs:

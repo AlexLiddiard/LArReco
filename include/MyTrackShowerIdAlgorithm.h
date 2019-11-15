@@ -59,6 +59,7 @@ private:
     void GetCaloHitInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, ViewHits *vHits);
     std::string GetFileName(const std::string& filePath);
     int GetCompleteMCParticleMap(lar_content::LArMCParticleHelper::MCContributionMap &completeMCParticleToHitsMap);
+    int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
 
     // Member variables here
     std::string     m_caloHitListName;          ///< Name of input calo hit list
