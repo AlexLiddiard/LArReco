@@ -117,7 +117,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
                  nHitsInBestMCParticleW = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
 
                  bestMCParticlePdgCode = pAssociatedMCParticle->GetParticleId();
-                 bestMCParticleIsTrack = ((PHOTON != pAssociatedMCParticle->GetParticleId()) && (E_MINUS != std::abs(pAssociatedMCParticle->GetParticleId())) ? 1 : 0);
+                 //bestMCParticleIsTrack = ((PHOTON != pAssociatedMCParticle->GetParticleId()) && (E_MINUS != std::abs(pAssociatedMCParticle->GetParticleId())) ? 1 : 0);
             }
 
             //PandoraMonitoringApi::VisualizeCaloHits(this->GetPandora(), &associatedMCHitsW, "associatedMCHitsW", GREEN);
