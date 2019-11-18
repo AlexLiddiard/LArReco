@@ -60,6 +60,7 @@ private:
     std::string GetFileName(const std::string& filePath);
     int GetCompleteMCParticleMap(lar_content::LArMCParticleHelper::MCContributionMap &completeMCParticleToHitsMap);
     int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
+    void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
 
     // Member variables here
     std::string     m_caloHitListName;          ///< Name of input calo hit list
