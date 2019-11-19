@@ -60,6 +60,7 @@ private:
     std::string GetFileName(const std::string& filePath);
     int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
     void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
+    void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, int &pDGCode, int &nHitsShared, int &nHitsBestMCParticle);
 
     // Member variables here
     std::string     m_caloHitListName;          ///< Name of input calo hit list
@@ -69,7 +70,10 @@ private:
     std::string				m_fileName; 		///< Name of output file
     TFile				*m_pTFile;		///< ROOT tree file
     TTree				*m_pPfoTree;		///< PFO tree
-    
+
+    lar_content::LArMCParticleHelper::MCContributionMap m_selectiveMap;                            ///< Bespoke mapping of MCParticles to associated Calohits
+    lar_content::LArMCParticleHelper::PfoToMCParticleHitSharingMap m_pfoToMCHitSharingMap;         ///< Mapping from PFOs to associated MCParticles and their shared hits
+
     // PFO tree variables
     int					m_EventId;		///< Current event id
     int					m_HierarchyTier;	///< PFO hierarchy tier
