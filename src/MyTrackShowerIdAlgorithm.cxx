@@ -28,10 +28,12 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
 
     // Mapping reconstructed particles -> reconstruction associated Hits
     // TODO take care when ensuring Pfos accessed here are same as in your loop below - any selection here may mean info not available below
+    std::cout <<  "Mapping reconstructed particles -> reconstruction associated Hits" << std::endl;
     PfoList allConnectedPfos;
     LArPfoHelper::GetAllConnectedPfos(*pPfoList, allConnectedPfos);
 
     // Input lists
+    std::cout <<  "Input lists" << std::endl;
     const MCParticleList *pMCParticleList = nullptr;
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_mcParticleListName, pMCParticleList));
 
@@ -39,19 +41,24 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
 
     // Mapping target MCParticles -> truth associated Hits
+    std::cout <<  "Mapping target MCParticles -> truth associated Hits" << std::endl;
     LArMCParticleHelper::MCContributionMap basicMCParticleToHitsMap;
-    this->GetCompleteMCParticleMap(basicMCParticleToHitsMap);
+    
+    //this->GetCompleteMCParticleMap(pCaloHitList, basicMCParticleToHitsMap);
+    const LArMCParticleHelper::MCRelationMap emptyMCPrimaryMap;
+    LArMCParticleHelper::CaloHitToMCMap caloHitToMCMap;
+    LArMCParticleHelper::GetMCParticleToCaloHitMatches(pCaloHitList, emptyMCPrimaryMap, caloHitToMCMap, basicMCParticleToHitsMap);
 
     // Get Neutrino MCParticle
+    std::cout << "Get Neutrino MCParticle " << std::endl;
     MCParticleList parentMCNuList; 
     this->GetParentNeutrino(pMCParticleList, parentMCNuList);
-    
     std::cout << "Found this many parent neutrinos: " << parentMCNuList.size() << std::endl;
 
     CaloHitList rejectedCaloHitList;
     LArMCParticleHelper::MCContributionMap targetMCParticleToHitsMap;
     // Assuming there is one incident neutrino in the MCParticleList (also being very lazy and only mapping for the first event).
-    Mapper(basicMCParticleToHitsMap, parentMCNuList.front(), false, rejectedCaloHitList, targetMCParticleToHitsMap);
+    this->Mapper(basicMCParticleToHitsMap, parentMCNuList.front(), false, rejectedCaloHitList, targetMCParticleToHitsMap);
     std::cout << rejectedCaloHitList.size() << std::endl;
 
     LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
@@ -132,18 +139,6 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
-// Function which creates a complete MCParticle to calohit map.
-int MyTrackShowerIdAlgorithm::GetCompleteMCParticleMap(LArMCParticleHelper::MCContributionMap &completeMCParticleToHitsMap) {
-    const CaloHitList *pCaloHitList = nullptr;
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
-    for (const CaloHit *const pCaloHit : *pCaloHitList)
-    {
-        const MCParticle *const pMainMCParticle(MCParticleHelper::GetMainMCParticle(pCaloHit));
-        completeMCParticleToHitsMap[pMainMCParticle].push_back(pCaloHit);
-    }
-    return STATUS_CODE_SUCCESS;
-}
-
 // Function which gets event parent neutrino.
 int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCParticleList, MCParticleList &parentMCNuList){
     for (const MCParticle *const mCParticle : *pMCParticleList)
@@ -158,31 +153,48 @@ int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCP
 
 // Mapper Function ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap){
-    // Get direct MCParticle calohits.
-    const CaloHitList &mCPCaloHits(basicMap.at(pMCParticle));
-    // Get MCParticle PDGCode.
-    int PDGCode = std::abs(pMCParticle->GetParticleId());
     // Create new list which holds calohits to be added to map if necessary.
+    //std::cout << "Create new list which holds calohits to be added to map if necessary." << std::endl;
     CaloHitList newMCPCaloHits;
-    // Copy the direct hits into the newCaloHitsList as they would definitely be added to the map.
-    std::copy(mCPCaloHits.begin(), mCPCaloHits.end(), newMCPCaloHits.begin());
+
+    // Get direct MCParticle calohits.
+    //std::cout << "Get direct MCParticle calohits." << std::endl;
+    if (basicMap.count(pMCParticle) == 1)
+    {
+        const CaloHitList &mCPCaloHits(basicMap.at(pMCParticle));
+        // Copy the direct hits into the newCaloHitsList as they would definitely be added to the map.
+        //std::cout << "Copy the direct hits into the newCaloHitsList as they would definitely be added to the map." << std::endl;
+        std::copy(mCPCaloHits.begin(), mCPCaloHits.end(), std::back_inserter(selectiveMap[pMCParticle]));
+    }
+    // Get MCParticle PDGCode.
+    //std::cout << "Get MCParticle PDGCode." << std::endl;
+    int PDGCode = std::abs(pMCParticle->GetParticleId());
+ 
     // Looping over every daughterMCParticle.
+    //std::cout << "Looping over every daughterMCParticle." << std::endl;
+    CaloHitList returnedCaloHits;
     for (const MCParticle *const pMCDaughter : pMCParticle->GetDaughterList())
     {
         // Run mapper on daughterMCParticles, setting isShowerProduct to true if the daughter is a shower particle.
-        CaloHitList returnedCaloHits;
+        //std::cout << "Run mapper on daughterMCParticles, setting isShowerProduct to true if the daughter is a shower particle." << std::endl;
         Mapper(basicMap, pMCDaughter, (PDGCode == E_MINUS || PDGCode == PHOTON), returnedCaloHits, selectiveMap);
         // Merge the returned caloHits into the new MCParticle caloHitList.
-        std::copy(returnedCaloHits.end(), returnedCaloHits.begin(), newMCPCaloHits.end());
+        //std::cout << "Merge the returned caloHits into the new MCParticle caloHitList." << std::endl;
     }
+    std::copy(returnedCaloHits.end(), returnedCaloHits.begin(), std::back_inserter(newMCPCaloHits));
+
     if (newMCPCaloHits.size() > 20 && isShowerProduct == false)
     {
-        selectiveMap.insert ( std::pair<const MCParticle*, CaloHitList>(pMCParticle,newMCPCaloHits) );
+        //selectiveMap.insert ( std::pair<const MCParticle*, CaloHitList>(pMCParticle,newMCPCaloHits) );
+        std::copy(newMCPCaloHits.begin(), newMCPCaloHits.end(), std::back_inserter(selectiveMap[pMCParticle]));
     }
     else
     {
-        std::copy(newMCPCaloHits.begin(), newMCPCaloHits.end(), caloHitsToMerge.begin());
+        std::copy(newMCPCaloHits.begin(), newMCPCaloHits.end(), std::back_inserter(caloHitsToMerge));
     }
+    std::cout << "Hits in newMCPCaloHits: " << newMCPCaloHits.size() << std::endl;
+    std::cout << "Hits in caloHitsToMerge: " << caloHitsToMerge.size() << std::endl;
+    LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, newMCPCaloHits);
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
