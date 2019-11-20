@@ -14,6 +14,7 @@
 #include "larpandoracontent/LArHelpers/LArMCParticleHelper.h"
 #include "larpandoracontent/LArHelpers/LArPfoHelper.h"
 #include "larpandoracontent/LArPersistency/EventReadingAlgorithm.h"
+#include "larpandoracontent/LArMonitoring/MCParticleMonitoringAlgorithm.h"
 
 using namespace lar_content;
 
@@ -31,7 +32,6 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
 
     // Mapping reconstructed particles -> reconstruction associated Hits
-    // TODO take care when ensuring Pfos accessed here are same as in your loop below - any selection here may mean info not available below
     std::cout <<  "Mapping reconstructed particles -> reconstruction associated Hits" << std::endl;
     PfoList allConnectedPfos;
     LArPfoHelper::GetAllConnectedPfos(*pPfoList, allConnectedPfos);
@@ -48,7 +48,6 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     std::cout <<  "Mapping target MCParticles -> truth associated Hits" << std::endl;
     LArMCParticleHelper::MCContributionMap basicMCParticleToHitsMap;
     
-    //this->GetCompleteMCParticleMap(pCaloHitList, basicMCParticleToHitsMap);
     const LArMCParticleHelper::MCRelationMap emptyMCPrimaryMap;
     LArMCParticleHelper::CaloHitToMCMap caloHitToMCMap;
     LArMCParticleHelper::GetMCParticleToCaloHitMatches(pCaloHitList, emptyMCPrimaryMap, caloHitToMCMap, basicMCParticleToHitsMap);
@@ -60,6 +59,8 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     {
         CaloHitList rejectedCaloHitList;
         this->Mapper(basicMCParticleToHitsMap, parentMCNuList.front(), false, rejectedCaloHitList, m_selectiveMap);
+        this->PrintMCParticles(m_selectiveMap);
+        //MCParticleMonitoringAlgorithm::PrintPrimaryMCParticles(m_selectiveMap);
     }
     else
     {
@@ -102,29 +103,46 @@ int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCP
 
 // Mapper Function ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap){
+    int hierarchy = LArMCParticleHelper::GetHierarchyTier(pMCParticle);
+    std::string indent = std::string(hierarchy * 2, ' ');
+
     // Get MCParticle PDGCode.
     int PDGCode = std::abs(pMCParticle->GetParticleId());
+    std::cout << indent << "Begin mapping MC particle with ID " << PDGCode << std::endl;
 
     // Looping over every daughterMCParticle.
     CaloHitList returnedCaloHits;
+    std::cout << indent << "Begin mapping out the daughters." << std::endl;
+    int count = 1;
     for (const MCParticle *const pMCDaughter : pMCParticle->GetDaughterList())
     {
         // Run mapper on daughterMCParticles, setting isShowerProduct to true if the daughter is a shower particle.
         Mapper(basicMap, pMCDaughter, (PDGCode == E_MINUS || PDGCode == PHOTON || isShowerProduct), returnedCaloHits, selectiveMap);
+        std::cout << indent << "Processed daughter number " << count << std::endl;
+        std::cout << indent << "Currently have " << returnedCaloHits.size() << " returned hits." << std::endl;
+        count++;
     }
+    std::cout << indent << "Finished mapping out the daughters." << std::endl;
 
     // Get the direct MCParticle calohits.
     CaloHitList mCPCaloHits;
     if (basicMap.count(pMCParticle) == 1)
     {
+        std::cout << indent << "The MC particle has " << PDGCode << " direct hits." << std::endl;
         mCPCaloHits = basicMap.at(pMCParticle);
     }
 
+    std::cout << indent << "MCParticle has a total of " << returnedCaloHits.size() + mCPCaloHits.size() << " hits." << std::endl;
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
     if (returnedCaloHits.size() + mCPCaloHits.size() > 20 && !isShowerProduct)
     {
+        std::cout << indent << "MCParticle has more than 20 hits, adding entry to map." << std::endl;
         // Add this MCParticle and its hits to the map (instead of adding to a list of hits to be merged)
         caloHits_back_inserter = std::back_inserter(selectiveMap[pMCParticle]);
+    }
+    else
+    {
+        std::cout << indent << "MCParticle has less than 20 hits, returning the hits to the parent." << std::endl;
     }
     // Copy the direct hits if available
     std::copy(mCPCaloHits.begin(), mCPCaloHits.end(), caloHits_back_inserter);
@@ -155,6 +173,61 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
     }
 }
 
+//Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
+void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCContributionMap &mcContributionMap) const
+{
+    MCParticleVector mcPrimaryVector;
+    LArMonitoringHelper::GetOrderedMCParticleVector({mcContributionMap}, mcPrimaryVector);
+
+    unsigned int index(0);
+
+    for (const MCParticle *const pMCPrimary : mcPrimaryVector)
+    {
+        const CaloHitList &caloHitList(mcContributionMap.at(pMCPrimary));
+
+        if (caloHitList.size() >= 1)
+        {
+            std::cout << std::endl << "--Primary " << index << ", MCPDG " << pMCPrimary->GetParticleId() << ", Energy " << pMCPrimary->GetEnergy()
+                      << ", Dist. " << (pMCPrimary->GetEndpoint() - pMCPrimary->GetVertex()).GetMagnitude() << ", nMCHits " << caloHitList.size()
+                      << " (" << LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, caloHitList)
+                      << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, caloHitList)
+                      << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, caloHitList) << ")" << std::endl;
+
+            LArMCParticleHelper::MCRelationMap mcToPrimaryMCMap;
+            LArMCParticleHelper::CaloHitToMCMap caloHitToPrimaryMCMap;
+            LArMCParticleHelper::MCContributionMap mcToTrueHitListMap;
+            LArMCParticleHelper::GetMCParticleToCaloHitMatches(&caloHitList, mcToPrimaryMCMap, caloHitToPrimaryMCMap, mcToTrueHitListMap);
+            this->PrintMCParticle(pMCPrimary, mcToTrueHitListMap, 1);
+        }
+
+        ++index;
+    }
+}
+//Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
+void MyTrackShowerIdAlgorithm::PrintMCParticle(const MCParticle *const pMCParticle, const LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap,
+    const int depth) const
+{
+    const CaloHitList &caloHitList(mcToTrueHitListMap.count(pMCParticle) ? mcToTrueHitListMap.at(pMCParticle) : CaloHitList());
+
+    if (caloHitList.size() >= 1)
+    {
+        if (depth > 1)
+        {
+            for (int iDepth = 1; iDepth < depth - 1; ++iDepth) std::cout << "   ";
+            std::cout << "\\_ ";
+        }
+
+        std::cout << "MCPDG " << pMCParticle->GetParticleId() << ", Energy " << pMCParticle->GetEnergy()
+                  << ", Dist. " << (pMCParticle->GetEndpoint() - pMCParticle->GetVertex()).GetMagnitude() << ", nMCHits " << caloHitList.size()
+                  << " (" << LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, caloHitList)
+                  << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, caloHitList)
+                  << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, caloHitList) << ")" << std::endl;
+    }
+
+    for (const MCParticle *const pDaughterParticle : pMCParticle->GetDaughterList())
+        this->PrintMCParticle(pDaughterParticle, mcToTrueHitListMap, depth + 1);
+}
+//-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 Inputs:
 const ParticleFlowObject *const pPfo	// The PFO to be written to the ROOT tree.
