@@ -321,6 +321,7 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
+    LArPfoHelper::GetIsolatedCaloHits(pPfo, hitType, caloHitList);
     viewHits->nHitsPfo = caloHitList.size();
     for (const CaloHit *const caloHit : caloHitList)
     {
