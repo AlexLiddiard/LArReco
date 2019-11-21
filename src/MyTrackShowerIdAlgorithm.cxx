@@ -31,11 +31,6 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     const PfoList *pPfoList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
 
-    // Mapping reconstructed particles -> reconstruction associated Hits
-    //std::cout <<  "Mapping reconstructed particles -> reconstruction associated Hits" << std::endl;
-    PfoList allConnectedPfos;
-    LArPfoHelper::GetAllConnectedPfos(*pPfoList, allConnectedPfos);
-
     // Input lists
     //std::cout <<  "Input lists" << std::endl;
     const MCParticleList *pMCParticleList = nullptr;
@@ -48,9 +43,8 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     //std::cout <<  "Mapping target MCParticles -> truth associated Hits" << std::endl;
     LArMCParticleHelper::MCContributionMap basicMCParticleToHitsMap;
     
-    const LArMCParticleHelper::MCRelationMap emptyMCPrimaryMap;
     LArMCParticleHelper::CaloHitToMCMap caloHitToMCMap;
-    LArMCParticleHelper::GetMCParticleToCaloHitMatches(pCaloHitList, emptyMCPrimaryMap, caloHitToMCMap, basicMCParticleToHitsMap);
+    LArMCParticleHelper::GetMCParticleToCaloHitMatches(pCaloHitList, LArMCParticleHelper::MCRelationMap(), caloHitToMCMap, basicMCParticleToHitsMap);
 
     // Get Neutrino MCParticle
     MCParticleList parentMCNuList; 
@@ -69,7 +63,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     }
 
     LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
-    LArMCParticleHelper::GetPfoToReconstructable2DHitsMap(allConnectedPfos, m_selectiveMap, pfoToHitsMap);
+    LArMCParticleHelper::GetPfoToReconstructable2DHitsMap(*pPfoList, m_selectiveMap, pfoToHitsMap);
 
     LArMCParticleHelper::MCParticleToPfoHitSharingMap mcToPfoHitSharingMap;
     LArMCParticleHelper::GetPfoMCParticleHitSharingMaps(pfoToHitsMap, {m_selectiveMap}, m_pfoToMCHitSharingMap, mcToPfoHitSharingMap);
@@ -90,7 +84,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
-// Function which gets event parent neutrino.
+// Function which gets event parent neutrino ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCParticleList, MCParticleList &parentMCNuList){
     for (const MCParticle *const mCParticle : *pMCParticleList)
     {
@@ -152,31 +146,39 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, HitType hitType, int &bestMCParticlePdgCode, int &nHitsShared, int &nHitsBestMCParticle){
+void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits *UView, ViewHits *VView, ViewHits *WView){
     int nHitsSharedWithBestMCParticleTotal(0);
 
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));
 
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
     {
-        //std::cout << "Got a shared hits vector element." << std::endl;
         const MCParticle *const mcParticle(pMCParticleCaloHitListPair.first);
         const CaloHitList &allMCHits(m_selectiveMap.at(pMCParticleCaloHitListPair.first));
-        const CaloHitList &associatedMCHits(pMCParticleCaloHitListPair.second);
-        //std::cout << "Number of associated MCHits = " << associatedMCHits.size() << std::endl;
-        //std::cout << "nHitsSharedWithBestMCParticleTotal = " << nHitsSharedWithBestMCParticleTotal << std::endl;
-        //std::cout << "associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal = " << (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal) << std::endl;  
+        const CaloHitList &associatedMCHits(pMCParticleCaloHitListPair.second); 
         if (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal)
         {
             // This is the current best matched MCParticle, to be stored.
             nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
-            bestMCParticlePdgCode = mcParticle->GetParticleId();
-            nHitsShared = LArMonitoringHelper::CountHitsByType(hitType, associatedMCHits);
-            nHitsBestMCParticle = LArMonitoringHelper::CountHitsByType(hitType, allMCHits);
-            //std::cout << "Found a new best match to MCParticle!" << std::endl;
+            int bestMCParticlePdgCode = mcParticle->GetParticleId();
+
+            UView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
+            UView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
+            UView->mcPdgCode = bestMCParticlePdgCode;
+            
+            VView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
+            VView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits);
+            VView->mcPdgCode = bestMCParticlePdgCode;
+            
+            WView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits);
+            WView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
+            WView->mcPdgCode = bestMCParticlePdgCode;
+
         }
     }
-    std::cout << "Got best MC Particle, bestMCParticlePdgCode " << bestMCParticlePdgCode << ", nHitsShared " << nHitsShared << ", nHitsBestMCParticle " << nHitsBestMCParticle << std::endl;
+    std::cout << "Got best MC Particle, bestMCParticlePdgCode " << UView->mcPdgCode
+              << ", nHitsShared U: " << UView->nHitsMatch << " V: " <<  VView->nHitsMatch << " W: " << WView->nHitsMatch
+              << ", nHitsBestMatchMCP U: " << UView->nHitsMcp << " V: " << VView->nHitsMcp << " W: " << WView->nHitsMcp << std::endl;
 }
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -283,6 +285,11 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
 
+    if (m_UViewHits.nHitsPfo + m_VViewHits.nHitsPfo + m_WViewHits.nHitsPfo > 0)
+    {
+        this->GetBestMatchedMCParticleInfo(pPfo, &m_UViewHits, &m_VViewHits, &m_WViewHits);
+    }
+
     try
     {
         const Vertex *vertex(LArPfoHelper::GetVertex(pPfo));
@@ -306,36 +313,15 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     HitType hitType,
     ViewHits *viewHits)
 {
-    std::string s;
-    switch (hitType)
-    {
-        case TPC_VIEW_U: s = "U"; break;
-        case TPC_VIEW_V: s = "V"; break;
-        case TPC_VIEW_W: s = "W"; break;
-        case TPC_3D: s = "3D"; break;
-        default: s = ""; break;
-    }
-    std::cout << "MyTrackShowerIdAlgorithm: Getting calohit info for  " << s << " view." << std::endl;
-
     viewHits->pXCoord->clear();
     viewHits->pYCoord->clear();
     viewHits->pZCoord->clear();
     viewHits->pXCoordError->clear();
     viewHits->pEnergy->clear();
-    viewHits->nHitsPfo = 0;
-    viewHits->nHitsMcp = 0;
-    viewHits->nHitsMatch = 0;
-    viewHits->nHitsMatch = 0;
-    viewHits->nHitsMatch = 0;
-    viewHits->nHitsMcp = 0;
-    viewHits->mcPdgCode = 0;
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
-
-
-    GetBestMatchedMCParticleInfo(pPfo, hitType, viewHits->mcPdgCode, viewHits->nHitsMatch, viewHits->nHitsMcp);
-
+    viewHits->nHitsPfo = caloHitList.size();
     for (const CaloHit *const caloHit : caloHitList)
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
@@ -348,8 +334,18 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         viewHits->pZCoord->push_back(positionVector.GetZ());
         viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
         viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
-        viewHits->nHitsPfo++;
     }
+
+    std::string s;
+    switch (hitType)
+    {
+        case TPC_VIEW_U: s = "U"; break;
+        case TPC_VIEW_V: s = "V"; break;
+        case TPC_VIEW_W: s = "W"; break;
+        case TPC_3D: s = "3D"; break;
+        default: s = ""; break;
+    }
+    std::cout << "MyTrackShowerIdAlgorithm: Got " << viewHits->nHitsPfo << " calohits for this PFO in the " << s << " view." << std::endl;
 }
 
 // Gets a file name (without extension) from a file path 

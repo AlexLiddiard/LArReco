@@ -60,7 +60,7 @@ private:
     std::string GetFileName(const std::string& filePath);
     int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
     void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
-    void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, int &pDGCode, int &nHitsShared, int &nHitsBestMCParticle);
+    void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, ViewHits *UView, ViewHits *VView, ViewHits *WView);
     void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap) const;
     void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth) const;
 
