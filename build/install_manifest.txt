@@ -1,0 +1,4 @@
+/home/jack/Documents/Pandora/LArReco/lib/libLArReco.so.03.15.04
+/home/jack/Documents/Pandora/LArReco/lib/libLArReco.so.03.15
+/home/jack/Documents/Pandora/LArReco/lib/libLArReco.so
+/home/jack/Documents/Pandora/LArReco/bin/PandoraInterface

@@ -32,12 +32,12 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
 
     // Mapping reconstructed particles -> reconstruction associated Hits
-    std::cout <<  "Mapping reconstructed particles -> reconstruction associated Hits" << std::endl;
+    //std::cout <<  "Mapping reconstructed particles -> reconstruction associated Hits" << std::endl;
     PfoList allConnectedPfos;
     LArPfoHelper::GetAllConnectedPfos(*pPfoList, allConnectedPfos);
 
     // Input lists
-    std::cout <<  "Input lists" << std::endl;
+    //std::cout <<  "Input lists" << std::endl;
     const MCParticleList *pMCParticleList = nullptr;
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_mcParticleListName, pMCParticleList));
 
@@ -45,7 +45,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
 
     // Mapping target MCParticles -> truth associated Hits
-    std::cout <<  "Mapping target MCParticles -> truth associated Hits" << std::endl;
+    //std::cout <<  "Mapping target MCParticles -> truth associated Hits" << std::endl;
     LArMCParticleHelper::MCContributionMap basicMCParticleToHitsMap;
     
     const LArMCParticleHelper::MCRelationMap emptyMCPrimaryMap;
@@ -59,6 +59,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     {
         CaloHitList rejectedCaloHitList;
         this->Mapper(basicMCParticleToHitsMap, parentMCNuList.front(), false, rejectedCaloHitList, m_selectiveMap);
+        //std::cout << "Selective map contains " << m_selectiveMap.size() << " MC particles," << std::endl;
         this->PrintMCParticles(m_selectiveMap);
         //MCParticleMonitoringAlgorithm::PrintPrimaryMCParticles(m_selectiveMap);
     }
@@ -108,42 +109,42 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
 
     // Get MCParticle PDGCode.
     int PDGCode = std::abs(pMCParticle->GetParticleId());
-    std::cout << indent << "Begin mapping MC particle with ID " << PDGCode << std::endl;
+    //std::cout << indent << "Begin mapping MC particle with ID " << PDGCode << std::endl;
 
     // Looping over every daughterMCParticle.
     CaloHitList returnedCaloHits;
-    std::cout << indent << "Begin mapping out the daughters." << std::endl;
-    int count = 1;
+    //std::cout << indent << "Begin mapping out the daughters." << std::endl;
+    //int count = 1;
     for (const MCParticle *const pMCDaughter : pMCParticle->GetDaughterList())
     {
         // Run mapper on daughterMCParticles, setting isShowerProduct to true if the daughter is a shower particle.
         Mapper(basicMap, pMCDaughter, (PDGCode == E_MINUS || PDGCode == PHOTON || isShowerProduct), returnedCaloHits, selectiveMap);
-        std::cout << indent << "Processed daughter number " << count << std::endl;
-        std::cout << indent << "Currently have " << returnedCaloHits.size() << " returned hits." << std::endl;
-        count++;
+        //std::cout << indent << "Processed daughter number " << count << std::endl;
+        //std::cout << indent << "Currently have " << returnedCaloHits.size() << " returned hits." << std::endl;
+        //count++;
     }
-    std::cout << indent << "Finished mapping out the daughters." << std::endl;
+    //std::cout << indent << "Finished mapping out the daughters." << std::endl;
 
     // Get the direct MCParticle calohits.
     CaloHitList mCPCaloHits;
     if (basicMap.count(pMCParticle) == 1)
     {
-        std::cout << indent << "The MC particle has " << PDGCode << " direct hits." << std::endl;
         mCPCaloHits = basicMap.at(pMCParticle);
+        //std::cout << indent << "The MC particle has " << mCPCaloHits.size() << " direct hits." << std::endl;
     }
 
-    std::cout << indent << "MCParticle has a total of " << returnedCaloHits.size() + mCPCaloHits.size() << " hits." << std::endl;
+    //std::cout << indent << "MCParticle has a total of " << returnedCaloHits.size() << " + " << mCPCaloHits.size() << " = " << returnedCaloHits.size() + mCPCaloHits.size() << " hits." << std::endl;
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
     if (returnedCaloHits.size() + mCPCaloHits.size() > 20 && !isShowerProduct)
     {
-        std::cout << indent << "MCParticle has more than 20 hits, adding entry to map." << std::endl;
+        //std::cout << indent << "MCParticle has more than 20 hits, adding entry to map." << std::endl;
         // Add this MCParticle and its hits to the map (instead of adding to a list of hits to be merged)
         caloHits_back_inserter = std::back_inserter(selectiveMap[pMCParticle]);
     }
-    else
-    {
-        std::cout << indent << "MCParticle has less than 20 hits, returning the hits to the parent." << std::endl;
-    }
+    //else
+    //{
+        //std::cout << indent << "MCParticle has less than 20 hits, returning the hits to the parent." << std::endl;
+    //}
     // Copy the direct hits if available
     std::copy(mCPCaloHits.begin(), mCPCaloHits.end(), caloHits_back_inserter);
     // Copy the hits that were returned from daughters (i.e. merge them with this MCParticle)
@@ -151,26 +152,31 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, HitType hitType, int &pBestMCParticlePdgCode, int &nHitsShared, int &nHitsBestMCParticle){
-    std::cout << "Getting best matched MCParticle" << std::endl;
-    int nHitsSharedWithBestMCParticleTotal(-1);
+void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, HitType hitType, int &bestMCParticlePdgCode, int &nHitsShared, int &nHitsBestMCParticle){
+    int nHitsSharedWithBestMCParticleTotal(0);
 
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));
 
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
     {
+        //std::cout << "Got a shared hits vector element." << std::endl;
         const MCParticle *const mcParticle(pMCParticleCaloHitListPair.first);
         const CaloHitList &allMCHits(m_selectiveMap.at(pMCParticleCaloHitListPair.first));
         const CaloHitList &associatedMCHits(pMCParticleCaloHitListPair.second);
+        //std::cout << "Number of associated MCHits = " << associatedMCHits.size() << std::endl;
+        //std::cout << "nHitsSharedWithBestMCParticleTotal = " << nHitsSharedWithBestMCParticleTotal << std::endl;
+        //std::cout << "associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal = " << (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal) << std::endl;  
         if (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal)
         {
             // This is the current best matched MCParticle, to be stored.
             nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
-            pBestMCParticlePdgCode = mcParticle->GetParticleId();
+            bestMCParticlePdgCode = mcParticle->GetParticleId();
             nHitsShared = LArMonitoringHelper::CountHitsByType(hitType, associatedMCHits);
             nHitsBestMCParticle = LArMonitoringHelper::CountHitsByType(hitType, allMCHits);
+            //std::cout << "Found a new best match to MCParticle!" << std::endl;
         }
     }
+    std::cout << "Got best MC Particle, bestMCParticlePdgCode " << bestMCParticlePdgCode << ", nHitsShared " << nHitsShared << ", nHitsBestMCParticle " << nHitsBestMCParticle << std::endl;
 }
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
