@@ -146,7 +146,7 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits *UView, ViewHits *VView, ViewHits *WView){
+void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView){
     int nHitsSharedWithBestMCParticleTotal(0);
 
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));
@@ -162,23 +162,23 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
             nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
             int bestMCParticlePdgCode = mcParticle->GetParticleId();
 
-            UView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
-            UView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
-            UView->mcPdgCode = bestMCParticlePdgCode;
+            UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
+            UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
+            UView.mcPdgCode = bestMCParticlePdgCode;
             
-            VView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
-            VView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits);
-            VView->mcPdgCode = bestMCParticlePdgCode;
+            VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
+            VView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits);
+            VView.mcPdgCode = bestMCParticlePdgCode;
             
-            WView->nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits);
-            WView->nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
-            WView->mcPdgCode = bestMCParticlePdgCode;
+            WView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits);
+            WView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
+            WView.mcPdgCode = bestMCParticlePdgCode;
 
         }
     }
-    std::cout << "Got best MC Particle, bestMCParticlePdgCode " << UView->mcPdgCode
-              << ", nHitsShared U: " << UView->nHitsMatch << " V: " <<  VView->nHitsMatch << " W: " << WView->nHitsMatch
-              << ", nHitsBestMatchMCP U: " << UView->nHitsMcp << " V: " << VView->nHitsMcp << " W: " << WView->nHitsMcp << std::endl;
+    std::cout << "Got best MC Particle, bestMCParticlePdgCode " << UView.mcPdgCode
+              << ", nHitsShared U: " << UView.nHitsMatch << " V: " <<  VView.nHitsMatch << " W: " << WView.nHitsMatch
+              << ", nHitsBestMatchMCP U: " << UView.nHitsMcp << " V: " << VView.nHitsMcp << " W: " << WView.nHitsMcp << std::endl;
 }
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -280,14 +280,14 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
     
     // Write all other properties of pPFO to ROOT tree
 
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_U, &m_UViewHits);
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_V, &m_VViewHits);
-    this->GetCaloHitInfo(pPfo, TPC_VIEW_W, &m_WViewHits);
-    this->GetCaloHitInfo(pPfo, TPC_3D, &m_ThreeDViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_U, m_UViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_V, m_VViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
+    this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
 
     if (m_UViewHits.nHitsPfo + m_VViewHits.nHitsPfo + m_WViewHits.nHitsPfo > 0)
     {
-        this->GetBestMatchedMCParticleInfo(pPfo, &m_UViewHits, &m_VViewHits, &m_WViewHits);
+        this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
     }
 
     try
@@ -311,30 +311,30 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,int
 void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
     const ParticleFlowObject *const pPfo,
     HitType hitType,
-    ViewHits *viewHits)
+    ViewHits &viewHits)
 {
-    viewHits->pXCoord->clear();
-    viewHits->pYCoord->clear();
-    viewHits->pZCoord->clear();
-    viewHits->pXCoordError->clear();
-    viewHits->pEnergy->clear();
+    viewHits.pXCoord->clear();
+    viewHits.pYCoord->clear();
+    viewHits.pZCoord->clear();
+    viewHits.pXCoordError->clear();
+    viewHits.pEnergy->clear();
 
     CaloHitList caloHitList;
     LArPfoHelper::GetCaloHits(pPfo, hitType, caloHitList);
     LArPfoHelper::GetIsolatedCaloHits(pPfo, hitType, caloHitList);
-    viewHits->nHitsPfo = caloHitList.size();
+    viewHits.nHitsPfo = caloHitList.size();
     for (const CaloHit *const caloHit : caloHitList)
     {
         const CartesianVector &positionVector(caloHit->GetPositionVector());
 
-        viewHits->pXCoord->push_back(positionVector.GetX());
+        viewHits.pXCoord->push_back(positionVector.GetX());
         if (hitType == TPC_3D) // If hits are 3D we get the Y coordinate
         {
-            viewHits->pYCoord->push_back(positionVector.GetY());
+            viewHits.pYCoord->push_back(positionVector.GetY());
         }
-        viewHits->pZCoord->push_back(positionVector.GetZ());
-        viewHits->pEnergy->push_back(caloHit->GetInputEnergy());
-        viewHits->pXCoordError->push_back(caloHit->GetCellSize1());
+        viewHits.pZCoord->push_back(positionVector.GetZ());
+        viewHits.pEnergy->push_back(caloHit->GetInputEnergy());
+        viewHits.pXCoordError->push_back(caloHit->GetCellSize1());
     }
 
     std::string s;
@@ -346,7 +346,7 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         case TPC_3D: s = "3D"; break;
         default: s = ""; break;
     }
-    std::cout << "MyTrackShowerIdAlgorithm: Got " << viewHits->nHitsPfo << " calohits for this PFO in the " << s << " view." << std::endl;
+    std::cout << "MyTrackShowerIdAlgorithm: Got " << viewHits.nHitsPfo << " calohits for this PFO in the " << s << " view." << std::endl;
 }
 
 // Gets a file name (without extension) from a file path 
