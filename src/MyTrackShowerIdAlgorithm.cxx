@@ -306,11 +306,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     this->GetCaloHitInfo(pPfo, TPC_VIEW_V, m_VViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
-
-    if (m_UViewHits.nHitsPfo + m_VViewHits.nHitsPfo + m_WViewHits.nHitsPfo > 0)
-    {
-        this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
-    }
+    this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
 
     try
     {
