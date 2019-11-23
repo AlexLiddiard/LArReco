@@ -55,11 +55,11 @@ private:
     pandora::StatusCode Run();
     pandora::StatusCode ReadSettings(const pandora::TiXmlHandle xmlHandle);
 
-    int WritePfo(const pandora::ParticleFlowObject *const pPfo, int pfoId = 0, int parentPfoId = -1, int hierarchyTier = 0);
+    int WritePfo(const pandora::ParticleFlowObject *const pPfo, const int pfoId = 0, const int parentPfoId = -1, const int hierarchyTier = 0);
     void GetCaloHitInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, ViewHits &viewHits);
     std::string GetFileName(const std::string& filePath);
     int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
-    void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
+    void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, const bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
     void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView);
     void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap) const;
     void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth) const;
