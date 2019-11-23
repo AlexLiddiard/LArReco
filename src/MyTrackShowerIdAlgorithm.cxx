@@ -42,8 +42,12 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     LArMCParticleHelper::CaloHitToMCMap caloHitToMCMap;
     LArMCParticleHelper::GetMCParticleToCaloHitMatches(pCaloHitList, LArMCParticleHelper::MCRelationMap(), caloHitToMCMap, basicMCParticleToHitsMap);
 
+    // Mapping PFOs -> reconstructed calohit lists
+    LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
+    this->GetPfoToHitsMap(*pPfoList, pfoToHitsMap);
+
     // Get Neutrino MCParticle
-    MCParticleList parentMCNuList; 
+    MCParticleList parentMCNuList;
     this->GetParentNeutrino(pMCParticleList, parentMCNuList);
     if (parentMCNuList.size()) // Check that there is a MC parent neutrino
     {
@@ -58,9 +62,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
         std::cout << "The event has no MC parent neutrinos!" << std::endl;
     }
 
-    LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
-    LArMCParticleHelper::GetPfoToReconstructable2DHitsMap(*pPfoList, m_selectiveMap, pfoToHitsMap);
-
+    // Create hit sharing map
     LArMCParticleHelper::MCParticleToPfoHitSharingMap mcToPfoHitSharingMap;
     LArMCParticleHelper::GetPfoMCParticleHitSharingMaps(pfoToHitsMap, {m_selectiveMap}, m_pfoToMCHitSharingMap, mcToPfoHitSharingMap);
 
@@ -81,8 +83,27 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     return STATUS_CODE_SUCCESS;
 }
 
-// Function which gets event parent neutrino ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCParticleList, MCParticleList &parentMCNuList){
+// The original MCParticle helper version collects+filters all downstream hits. We just need a very simplistic map without any merging/filtering.
+void MyTrackShowerIdAlgorithm::GetPfoToHitsMap(const PfoList &pPfoList, LArMCParticleHelper::PfoContributionMap &pfoToHitsMap)
+{
+    for (const ParticleFlowObject *const pPfo : pPfoList)
+    {
+        CaloHitList caloHitList2D;
+        LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_U, caloHitList2D);
+        LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_V, caloHitList2D);
+        LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_W, caloHitList2D);
+        LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_U, caloHitList2D);
+        LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_V, caloHitList2D);
+        LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_W, caloHitList2D);
+        std::copy(caloHitList2D.begin(), caloHitList2D.end(),std::back_inserter(pfoToHitsMap[pPfo]));
+    }
+}
+
+
+
+// Function which gets event parent neutrino -------------------------------------------------------------------------m-----------------------------------------------------------------------------------------------------------------------
+int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCParticleList, MCParticleList &parentMCNuList)
+{
     for (const MCParticle *const mCParticle : *pMCParticleList)
     {
         if (mCParticle->GetParentList().empty() && LArMCParticleHelper::IsNeutrino(mCParticle))
@@ -94,7 +115,8 @@ int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCP
 }
 
 // Mapper Function ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, const bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap){
+void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, const bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap)
+{
     int hierarchy = LArMCParticleHelper::GetHierarchyTier(pMCParticle);
     std::string indent = std::string(hierarchy * 2, ' ');
 
@@ -129,7 +151,8 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
 }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView){
+void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView)
+{
     int bestMCParticlePdgCode(0);
     int nHitsSharedWithBestMCParticleTotal(0);
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));

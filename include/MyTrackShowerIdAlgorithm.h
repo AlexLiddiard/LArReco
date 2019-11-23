@@ -63,6 +63,7 @@ private:
     void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView);
     void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap) const;
     void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth) const;
+    void GetPfoToHitsMap(const pandora::PfoList &pPfoList, lar_content::LArMCParticleHelper::PfoContributionMap &pfoToHitsMap);
 
     // Member variables here
     std::string     m_caloHitListName;          ///< Name of input calo hit list
