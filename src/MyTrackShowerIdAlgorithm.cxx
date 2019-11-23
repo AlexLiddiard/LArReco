@@ -168,6 +168,15 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
     else
     {
         std::cout << "Could not find a matching MC particle for this PFO!" << std::endl;
+        UView.nHitsMatch = 0;
+        UView.nHitsMcp = 0;
+        UView.mcPdgCode = 0;    
+        VView.nHitsMatch = 0;
+        VView.nHitsMcp = 0;
+        VView.mcPdgCode = 0;
+        WView.nHitsMatch = 0;
+        WView.nHitsMcp = 0;
+        WView.mcPdgCode = 0;
     }
 }
 
