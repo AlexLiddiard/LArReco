@@ -88,14 +88,13 @@ void MyTrackShowerIdAlgorithm::GetPfoToHitsMap(const PfoList &pPfoList, LArMCPar
 {
     for (const ParticleFlowObject *const pPfo : pPfoList)
     {
-        CaloHitList caloHitList2D;
+        CaloHitList caloHitList2D = pfoToHitsMap[pPfo];
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_U, caloHitList2D);
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_V, caloHitList2D);
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_W, caloHitList2D);
         LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_U, caloHitList2D);
         LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_V, caloHitList2D);
         LArPfoHelper::GetIsolatedCaloHits(pPfo, TPC_VIEW_W, caloHitList2D);
-        std::copy(caloHitList2D.begin(), caloHitList2D.end(),std::back_inserter(pfoToHitsMap[pPfo]));
     }
 }
 
