@@ -88,7 +88,7 @@ void MyTrackShowerIdAlgorithm::GetPfoToHitsMap(const PfoList &pPfoList, LArMCPar
 {
     for (const ParticleFlowObject *const pPfo : pPfoList)
     {
-        CaloHitList caloHitList2D = pfoToHitsMap[pPfo];
+        CaloHitList &caloHitList2D(pfoToHitsMap[pPfo]);
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_U, caloHitList2D);
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_V, caloHitList2D);
         LArPfoHelper::GetCaloHits(pPfo, TPC_VIEW_W, caloHitList2D);
