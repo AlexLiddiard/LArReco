@@ -21,10 +21,9 @@ struct ViewHits
     pandora::FloatVector		*pZCoord;			///< hit z (for U/V/W view, equivalent to the wire plane coord)
     pandora::FloatVector		*pXCoordError;			///< hit x coord error
     pandora::FloatVector		*pEnergy;			///< hit electromagnetic energy
-    int					mcPdgCode;			///< truth particle for these hits
-    int					nHitsPfo;			///< total number of pfo hits
-    int					nHitsMatch;			///< number of hits matched with (best matched) Monte Carlo particle
-    int					nHitsMcp;			///< total number of hits for the (best matched) Monte Carlo particle
+    int					        nHitsPfo;			///< total number of pfo hits
+    int					        nHitsMatch;			///< number of hits matched with (best matched) Monte Carlo particle
+    int					        nHitsMcp;			///< total number of hits for the (best matched) Monte Carlo particle
 };
 
 /**
@@ -69,25 +68,28 @@ private:
     std::string     m_caloHitListName;          ///< Name of input calo hit list
     std::string     m_mcParticleListName;       ///< Name of input MC particle list
 
-    std::string				m_treeName; 		///< Name of output tree
-    std::string				m_fileName; 		///< Name of output file
-    TFile				*m_pTFile;		///< ROOT tree file
-    TTree				*m_pPfoTree;		///< PFO tree
+    std::string		m_treeName; 		        ///< Name of output tree
+    std::string		m_fileName; 		        ///< Name of output file
+    TFile			*m_pTFile;		            ///< ROOT tree file
+    TTree			*m_pPfoTree;		        ///< PFO tree
 
     lar_content::LArMCParticleHelper::MCContributionMap m_selectiveMap;                            ///< Bespoke mapping of MCParticles to associated Calohits
     lar_content::LArMCParticleHelper::PfoToMCParticleHitSharingMap m_pfoToMCHitSharingMap;         ///< Mapping from PFOs to associated MCParticles and their shared hits
 
     // PFO tree variables
-    int					m_EventId;		///< Current event id
+    int					m_EventId;		    ///< Current event id
     int					m_HierarchyTier;	///< PFO hierarchy tier
-    int					m_PfoId;		///< Current PFO id
+    int					m_PfoId;		    ///< Current PFO id
     int					m_ParentPfoId;		///< Parent PFO id
-    pandora::IntVector			*m_pDaughterPfoIds;	///< Daughter PFO ids
+    pandora::IntVector	*m_pDaughterPfoIds;	///< Daughter PFO ids
     float				m_Vertex[3];		///< PFO interaction vertex
-    ViewHits				m_UViewHits;		///< U view calo hits
-    ViewHits				m_VViewHits;		///< V view calo hits
-    ViewHits				m_WViewHits;		///< W view calo hits
-    ViewHits				m_ThreeDViewHits;	///< 3D view calo hits
+    ViewHits			m_UViewHits;		///< U view calo hits
+    ViewHits			m_VViewHits;		///< V view calo hits
+    ViewHits			m_WViewHits;		///< W view calo hits
+    ViewHits			m_ThreeDViewHits;	///< 3D view calo hits
+    int                 m_mcNuanceCode;     ///< Interaction type
+    int					m_mcPdgCode;		///< truth particle for this PFO
+    float               m_mcpEnergy;        ///< truth particle energy
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

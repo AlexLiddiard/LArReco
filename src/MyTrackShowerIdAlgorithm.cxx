@@ -116,9 +116,6 @@ int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCP
 // Mapper Function ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, const bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap)
 {
-    int hierarchy = LArMCParticleHelper::GetHierarchyTier(pMCParticle);
-    std::string indent = std::string(hierarchy * 2, ' ');
-
     // Get MCParticle PDGCode.
     int PDGCode = std::abs(pMCParticle->GetParticleId());
 
@@ -158,26 +155,24 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
     {
-        const MCParticle *const mcParticle(pMCParticleCaloHitListPair.first);
+        const LArMCParticle *const pLArMCParticle = dynamic_cast<const LArMCParticle*>(pMCParticleCaloHitListPair.first);
         const CaloHitList &allMCHits(m_selectiveMap.at(pMCParticleCaloHitListPair.first));
         const CaloHitList &associatedMCHits(pMCParticleCaloHitListPair.second); 
         if (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal)
         {
             // This is the current best matched MCParticle, to be stored.
             nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
-            bestMCParticlePdgCode = mcParticle->GetParticleId();
+            bestMCParticlePdgCode = pLArMCParticle->GetParticleId();
 
+            m_mcPdgCode = bestMCParticlePdgCode;
+            m_mcpEnergy = pLArMCParticle->GetEnergy();
+            m_mcNuanceCode = pLArMCParticle->GetNuanceCode();
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
-            UView.mcPdgCode = bestMCParticlePdgCode;
-            
             VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
-            VView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits);
-            VView.mcPdgCode = bestMCParticlePdgCode;
-            
+            VView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, allMCHits);  
             WView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits);
             WView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
-            WView.mcPdgCode = bestMCParticlePdgCode;
         }
     }
 
@@ -191,14 +186,11 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
     {
         std::cout << "Could not find a matching MC particle for this PFO!" << std::endl;
         UView.nHitsMatch = 0;
-        UView.nHitsMcp = 0;
-        UView.mcPdgCode = 0;    
+        UView.nHitsMcp = 0;    
         VView.nHitsMatch = 0;
         VView.nHitsMcp = 0;
-        VView.mcPdgCode = 0;
         WView.nHitsMatch = 0;
         WView.nHitsMcp = 0;
-        WView.mcPdgCode = 0;
     }
 }
 
@@ -305,6 +297,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     this->GetCaloHitInfo(pPfo, TPC_VIEW_V, m_VViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
+    
     this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
 
     try
@@ -376,10 +369,10 @@ std::string MyTrackShowerIdAlgorithm::GetFileName(const std::string& filePath)
 
 MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_EventId(0),
-    m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
-    m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
-    m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0},
-    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0,0}
+    m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
+    m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
+    m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
+    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0}
 {
 }
 
@@ -447,44 +440,46 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     m_pPfoTree->Branch("PfoId", &m_PfoId);
     m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
     m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
-    m_pPfoTree->Branch("HierarchyTier",  &m_HierarchyTier);
+    m_pPfoTree->Branch("HierarchyTier", &m_HierarchyTier);
+
+    // Simulation info
+    m_pPfoTree->Branch("mcNuanceCode", &m_mcNuanceCode);
+    m_pPfoTree->Branch("mcPdgCode", &m_mcPdgCode);
+    m_pPfoTree->Branch("mcpEnergy", &m_mcpEnergy);
 
     // U view
-    m_pPfoTree->Branch("DriftCoordU",  &(m_UViewHits.pXCoord));
-    m_pPfoTree->Branch("DriftCoordErrorU",  &(m_UViewHits.pXCoordError));
-    m_pPfoTree->Branch("WireCoordU",  &(m_UViewHits.pZCoord));
-    m_pPfoTree->Branch("EnergyU",  &(m_UViewHits.pEnergy));
-    m_pPfoTree->Branch("MCPdgCodeU",  &(m_UViewHits.mcPdgCode));
-    m_pPfoTree->Branch("nHitsPfoU",  &(m_UViewHits.nHitsPfo));
-    m_pPfoTree->Branch("nHitsMcpU",  &(m_UViewHits.nHitsMcp));
-    m_pPfoTree->Branch("nHitsMatchU",  &(m_UViewHits.nHitsMatch));
+    m_pPfoTree->Branch("driftCoordU", &(m_UViewHits.pXCoord));
+    m_pPfoTree->Branch("driftCoordErrorU", &(m_UViewHits.pXCoordError));
+    m_pPfoTree->Branch("wireCoordU", &(m_UViewHits.pZCoord));
+    m_pPfoTree->Branch("energyU", &(m_UViewHits.pEnergy));
+    m_pPfoTree->Branch("nHitsPfoU", &(m_UViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpU", &(m_UViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchU", &(m_UViewHits.nHitsMatch));
 
     // V view
-    m_pPfoTree->Branch("DriftCoordV",  &(m_VViewHits.pXCoord));
-    m_pPfoTree->Branch("DriftCoordErrorV",  &(m_VViewHits.pXCoordError));
-    m_pPfoTree->Branch("WireCoordV",  &(m_VViewHits.pZCoord));
-    m_pPfoTree->Branch("EnergyV",  &(m_VViewHits.pEnergy));
-    m_pPfoTree->Branch("MCPdgCodeV",  &(m_VViewHits.mcPdgCode));
-    m_pPfoTree->Branch("nHitsPfoV",  &(m_VViewHits.nHitsPfo));
-    m_pPfoTree->Branch("nHitsMcpV",  &(m_VViewHits.nHitsMcp));
-    m_pPfoTree->Branch("nHitsMatchV",  &(m_VViewHits.nHitsMatch));
+    m_pPfoTree->Branch("driftCoordV", &(m_VViewHits.pXCoord));
+    m_pPfoTree->Branch("driftCoordErrorV", &(m_VViewHits.pXCoordError));
+    m_pPfoTree->Branch("wireCoordV", &(m_VViewHits.pZCoord));
+    m_pPfoTree->Branch("energyV", &(m_VViewHits.pEnergy));
+    m_pPfoTree->Branch("nHitsPfoV", &(m_VViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpV", &(m_VViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchV", &(m_VViewHits.nHitsMatch));
 
     // W view
-    m_pPfoTree->Branch("DriftCoordW",  &(m_WViewHits.pXCoord));
-    m_pPfoTree->Branch("DriftCoordErrorW",  &(m_WViewHits.pXCoordError));
-    m_pPfoTree->Branch("WireCoordW",  &(m_WViewHits.pZCoord));
-    m_pPfoTree->Branch("EnergyW",  &(m_WViewHits.pEnergy));
-    m_pPfoTree->Branch("MCPdgCodeW",  &(m_WViewHits.mcPdgCode));
-    m_pPfoTree->Branch("nHitsPfoW",  &(m_WViewHits.nHitsPfo));
-    m_pPfoTree->Branch("nHitsMcpW",  &(m_WViewHits.nHitsMcp));
-    m_pPfoTree->Branch("nHitsMatchW",  &(m_WViewHits.nHitsMatch));
+    m_pPfoTree->Branch("driftCoordW", &(m_WViewHits.pXCoord));
+    m_pPfoTree->Branch("driftCoordErrorW", &(m_WViewHits.pXCoordError));
+    m_pPfoTree->Branch("wireCoordW", &(m_WViewHits.pZCoord));
+    m_pPfoTree->Branch("energyW", &(m_WViewHits.pEnergy));
+    m_pPfoTree->Branch("nHitsPfoW", &(m_WViewHits.nHitsPfo));
+    m_pPfoTree->Branch("nHitsMcpW", &(m_WViewHits.nHitsMcp));
+    m_pPfoTree->Branch("nHitsMatchW", &(m_WViewHits.nHitsMatch));
 
     // 3D view
-    m_pPfoTree->Branch("XCoordThreeD",  &(m_ThreeDViewHits.pXCoord));
-    m_pPfoTree->Branch("YCoordThreeD",  &(m_ThreeDViewHits.pYCoord));
-    m_pPfoTree->Branch("ZCoordThreeD",  &(m_ThreeDViewHits.pZCoord));
-    m_pPfoTree->Branch("EnergyThreeD",  &(m_ThreeDViewHits.pEnergy));
-    m_pPfoTree->Branch("Vertex",  &m_Vertex, "m_Vertex[3]/F");
+    m_pPfoTree->Branch("xCoordThreeD", &(m_ThreeDViewHits.pXCoord));
+    m_pPfoTree->Branch("yCoordThreeD", &(m_ThreeDViewHits.pYCoord));
+    m_pPfoTree->Branch("zCoordThreeD", &(m_ThreeDViewHits.pZCoord));
+    m_pPfoTree->Branch("energyThreeD", &(m_ThreeDViewHits.pEnergy));
+    m_pPfoTree->Branch("vertex", &m_Vertex, "m_Vertex[3]/F");
 
     return STATUS_CODE_SUCCESS;
 }
