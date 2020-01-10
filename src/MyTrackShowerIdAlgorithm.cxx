@@ -379,7 +379,7 @@ MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
 MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
 {
     // Build index for PFOs
-    m_pPfoTree->BuildIndex("EventId", "PfoId");
+    m_pPfoTree->BuildIndex("eventId", "pfoId");
 
     // Save the root tree
     std::cout << "MyTrackShowerIdAlgorithm: Saving ROOT tree " << m_treeName << " to file " << m_fileName << std::endl;
