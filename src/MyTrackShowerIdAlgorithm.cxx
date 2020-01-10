@@ -434,13 +434,13 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     std::cout <<  "MyTrackShowerIdAlgorithm: Creating tree file." << std::endl;
     m_pTFile = new TFile(m_fileName.c_str(), "RECREATE");
     m_pPfoTree = new TTree(m_treeName.c_str(), "A tree of PFOs.");
-    m_pPfoTree->Branch("EventId", &m_EventId);
+    m_pPfoTree->Branch("eventId", &m_EventId);
 
     // PFO identification + relations
-    m_pPfoTree->Branch("PfoId", &m_PfoId);
-    m_pPfoTree->Branch("ParentPfoId", &m_ParentPfoId);
-    m_pPfoTree->Branch("DaughterPfoIds", &m_pDaughterPfoIds);
-    m_pPfoTree->Branch("HierarchyTier", &m_HierarchyTier);
+    m_pPfoTree->Branch("pfoId", &m_PfoId);
+    m_pPfoTree->Branch("parentPfoId", &m_ParentPfoId);
+    m_pPfoTree->Branch("daughterPfoIds", &m_pDaughterPfoIds);
+    m_pPfoTree->Branch("hierarchyTier", &m_HierarchyTier);
 
     // Simulation info
     m_pPfoTree->Branch("mcNuanceCode", &m_mcNuanceCode);
