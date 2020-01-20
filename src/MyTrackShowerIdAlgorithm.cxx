@@ -165,7 +165,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
             bestMCParticlePdgCode = pLArMCParticle->GetParticleId();
 
             m_mcPdgCode = bestMCParticlePdgCode;
-            m_mcpEnergy = pLArMCParticle->GetEnergy();
+            m_mcpMomentum = pLArMCParticle->GetMomentum().GetMagnitude();
             m_mcNuanceCode = pLArMCParticle->GetNuanceCode();
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
@@ -445,7 +445,7 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     // Simulation info
     m_pPfoTree->Branch("mcNuanceCode", &m_mcNuanceCode);
     m_pPfoTree->Branch("mcPdgCode", &m_mcPdgCode);
-    m_pPfoTree->Branch("mcpEnergy", &m_mcpEnergy);
+    m_pPfoTree->Branch("mcpMomentum", &m_mcpMomentum);
 
     // U view
     m_pPfoTree->Branch("driftCoordU", &(m_UViewHits.pXCoord));

@@ -89,7 +89,7 @@ private:
     ViewHits			m_ThreeDViewHits;	///< 3D view calo hits
     int                 m_mcNuanceCode;     ///< Interaction type
     int					m_mcPdgCode;		///< truth particle for this PFO
-    float               m_mcpEnergy;        ///< truth particle energy
+    float               m_mcpMomentum;      ///< truth particle momentum
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
