@@ -75,6 +75,7 @@ private:
 
     lar_content::LArMCParticleHelper::MCContributionMap m_selectiveMap;                            ///< Bespoke mapping of MCParticles to associated Calohits
     lar_content::LArMCParticleHelper::PfoToMCParticleHitSharingMap m_pfoToMCHitSharingMap;         ///< Mapping from PFOs to associated MCParticles and their shared hits
+    const pandora::MCParticle *m_neutrinoMcp;
 
     // PFO tree variables
     int					m_EventId;		    ///< Current event id

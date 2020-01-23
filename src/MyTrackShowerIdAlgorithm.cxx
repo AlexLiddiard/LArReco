@@ -51,9 +51,10 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     this->GetParentNeutrino(pMCParticleList, parentMCNuList);
     if (parentMCNuList.size()) // Check that there is a MC parent neutrino
     {
+        m_neutrinoMcp = parentMCNuList.front();
         CaloHitList rejectedCaloHitList;
         std::cout << "\nGenerating MCParticle->CaloHit map..." << std::endl;
-        this->Mapper(basicMCParticleToHitsMap, parentMCNuList.front(), false, rejectedCaloHitList, m_selectiveMap);
+        this->Mapper(basicMCParticleToHitsMap, m_neutrinoMcp, false, rejectedCaloHitList, m_selectiveMap);
         std::cout << "Mapping complete, results:" << std::endl;
         this->PrintMCParticles(m_selectiveMap);
     }
@@ -155,18 +156,18 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
     {
-        const LArMCParticle *const pLArMCParticle = dynamic_cast<const LArMCParticle*>(pMCParticleCaloHitListPair.first);
+        const MCParticle *const pMCParticle(pMCParticleCaloHitListPair.first);
         const CaloHitList &allMCHits(m_selectiveMap.at(pMCParticleCaloHitListPair.first));
         const CaloHitList &associatedMCHits(pMCParticleCaloHitListPair.second); 
         if (associatedMCHits.size() > nHitsSharedWithBestMCParticleTotal)
         {
             // This is the current best matched MCParticle, to be stored.
             nHitsSharedWithBestMCParticleTotal = associatedMCHits.size();
-            bestMCParticlePdgCode = pLArMCParticle->GetParticleId();
+            bestMCParticlePdgCode = pMCParticle->GetParticleId();
 
             m_mcPdgCode = bestMCParticlePdgCode;
-            m_mcpMomentum = pLArMCParticle->GetMomentum().GetMagnitude();
-            m_mcNuanceCode = pLArMCParticle->GetNuanceCode();
+            m_mcpMomentum = pMCParticle->GetMomentum().GetMagnitude();
+            m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(LArMCParticleHelper::GetParentMCParticle(LArMCParticleHelper::GetPrimaryMCParticle(pMCParticle)));
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
             VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
@@ -178,7 +179,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     if (bestMCParticlePdgCode)
     {
-        std::cout << "Got best matching MC Particle, bestMCParticlePdgCode " << bestMCParticlePdgCode
+        std::cout << "Got best matching MC Particle, m_mcPdgCode " << m_mcPdgCode << ", mcNuanceCode " << m_mcNuanceCode
                   << ", nHitsShared U: " << UView.nHitsMatch << " V: " <<  VView.nHitsMatch << " W: " << WView.nHitsMatch
                   << ", nHitsBestMatchMCP U: " << UView.nHitsMcp << " V: " << VView.nHitsMcp << " W: " << WView.nHitsMcp << std::endl;
     }
@@ -298,7 +299,14 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
     
-    this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
+    if (parentPfoId != -1){
+        this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
+    }
+    else{
+        m_mcPdgCode = m_neutrinoMcp->GetParticleId();
+        m_mcpMomentum = m_neutrinoMcp->GetMomentum().GetMagnitude();
+        m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_neutrinoMcp);
+    }
 
     try
     {
