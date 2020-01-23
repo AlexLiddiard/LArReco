@@ -167,7 +167,6 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
             m_mcPdgCode = bestMCParticlePdgCode;
             m_mcpMomentum = pMCParticle->GetMomentum().GetMagnitude();
-            m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(LArMCParticleHelper::GetParentMCParticle(LArMCParticleHelper::GetPrimaryMCParticle(pMCParticle)));
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
             VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
@@ -179,7 +178,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     if (bestMCParticlePdgCode)
     {
-        std::cout << "Got best matching MC Particle, m_mcPdgCode " << m_mcPdgCode << ", mcNuanceCode " << m_mcNuanceCode
+        std::cout << "Got best matching MC Particle, mcPdgCode " << m_mcPdgCode
                   << ", nHitsShared U: " << UView.nHitsMatch << " V: " <<  VView.nHitsMatch << " W: " << WView.nHitsMatch
                   << ", nHitsBestMatchMCP U: " << UView.nHitsMcp << " V: " << VView.nHitsMcp << " W: " << WView.nHitsMcp << std::endl;
     }
