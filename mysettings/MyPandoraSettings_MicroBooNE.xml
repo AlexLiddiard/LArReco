@@ -59,6 +59,7 @@
         <OutputTree>PFOs</OutputTree>
         <CaloHitListName>CaloHitList2D</CaloHitListName>
         <MCParticleListName>Input</MCParticleListName>
+        <MCMappingMinHits>20</MCMappingMinHits>
     </algorithm>
 
 <!--

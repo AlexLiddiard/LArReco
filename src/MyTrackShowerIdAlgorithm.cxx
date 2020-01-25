@@ -51,10 +51,14 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     this->GetParentNeutrino(pMCParticleList, parentMCNuList);
     if (parentMCNuList.size()) // Check that there is a MC parent neutrino
     {
+        // Set the MC neutrino and interaction type for this event
         m_neutrinoMcp = parentMCNuList.front();
-        CaloHitList rejectedCaloHitList;
+        m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_neutrinoMcp);
+        std::cout << "Event nuance code: " << m_mcNuanceCode << std::endl;
+        // Map the MC particles
         std::cout << "\nGenerating MCParticle->CaloHit map..." << std::endl;
-        this->Mapper(basicMCParticleToHitsMap, m_neutrinoMcp, false, rejectedCaloHitList, m_selectiveMap);
+        CaloHitList rejectedCaloHitList;
+        this->Mapper(basicMCParticleToHitsMap, m_neutrinoMcp, false, 0, rejectedCaloHitList, m_selectiveMap);
         std::cout << "Mapping complete, results:" << std::endl;
         this->PrintMCParticles(m_selectiveMap);
     }
@@ -115,7 +119,13 @@ int MyTrackShowerIdAlgorithm::GetParentNeutrino(const MCParticleList *const pMCP
 }
 
 // Mapper Function ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionMap &basicMap, const MCParticle *const pMCParticle, const bool isShowerProduct, CaloHitList &caloHitsToMerge, LArMCParticleHelper::MCContributionMap &selectiveMap)
+void MyTrackShowerIdAlgorithm::Mapper(
+    const LArMCParticleHelper::MCContributionMap &basicMap, 
+    const MCParticle *const pMCParticle, 
+    const bool isShowerProduct, 
+    const int hierarchyTier,
+    CaloHitList &caloHitsToMerge, 
+    LArMCParticleHelper::MCContributionMap &selectiveMap)
 {
     // Get MCParticle PDGCode.
     int PDGCode = std::abs(pMCParticle->GetParticleId());
@@ -125,7 +135,7 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
     for (const MCParticle *const pMCDaughter : pMCParticle->GetDaughterList())
     {
         // Run mapper on daughterMCParticles, setting isShowerProduct to true if the parent is a shower particle.
-        Mapper(basicMap, pMCDaughter, (PDGCode == E_MINUS || PDGCode == PHOTON || isShowerProduct), returnedCaloHits, selectiveMap);
+        Mapper(basicMap, pMCDaughter, (PDGCode == E_MINUS || PDGCode == PHOTON || isShowerProduct), hierarchyTier + 1, returnedCaloHits, selectiveMap);
     }
 
     // Get the direct MCParticle calohits.
@@ -136,7 +146,9 @@ void MyTrackShowerIdAlgorithm::Mapper(const LArMCParticleHelper::MCContributionM
     }
 
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
-    if (returnedCaloHits.size() + mCPCaloHits.size() > 20 && !isShowerProduct)
+    // With the exception of primaries, an MC particle is mapped only if it has enough hits and is not a shower product.
+    const int nCalohits = returnedCaloHits.size() + mCPCaloHits.size();
+    if ((hierarchyTier == 1 && nCalohits > 0) || (!isShowerProduct && nCalohits > m_mcMappingMinHits))
     {
         // Add this MCParticle and its hits to the map (instead of adding to a list of hits to be merged)
         caloHits_back_inserter = std::back_inserter(selectiveMap[pMCParticle]);
@@ -268,6 +280,11 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
 {
     IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
     int pfosWritten(0);		// pfosWritten = 0.
+    if (pfoId == 0)
+    {
+        m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_neutrinoMcp);
+    }
+
     for (const ParticleFlowObject *const daughterPfo : pPfo->GetDaughterPfoList()) // for each daughterPfo in pPfo.daughterPfos:
     {
         int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
@@ -297,14 +314,15 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     this->GetCaloHitInfo(pPfo, TPC_VIEW_V, m_VViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
-    
-    if (parentPfoId != -1){
-        this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
-    }
-    else{
-        m_mcPdgCode = m_neutrinoMcp->GetParticleId();
+    if (pfoId == 0)
+    {
+        // This is the neutrino PFO, so retrieve the MC neutrino info
         m_mcpMomentum = m_neutrinoMcp->GetMomentum().GetMagnitude();
-        m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_neutrinoMcp);
+        m_mcPdgCode = m_neutrinoMcp->GetParticleId();
+    }
+    else
+    {
+        this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
     }
 
     try
@@ -424,12 +442,23 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
 StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
 {
     // Read settings from xml file here
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "CaloHitListName", m_caloHitListName));
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "MCParticleListName", m_mcParticleListName));
-
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName));
-    const StatusCode statusCode(XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName));
-    if (STATUS_CODE_SUCCESS != statusCode) // If there is no name given, use the same name as the input file (with extension changed to .root)
+    if (XmlHelper::ReadValue(xmlHandle, "CaloHitListName", m_caloHitListName) != STATUS_CODE_SUCCESS)
+    {
+        m_mcParticleListName = "CaloHitList2D";
+    }
+    if (XmlHelper::ReadValue(xmlHandle, "MCParticleListName", m_mcParticleListName) != STATUS_CODE_SUCCESS)
+    {
+        m_mcParticleListName = "Input";
+    }
+    if (XmlHelper::ReadValue(xmlHandle, "MCMappingMinHits", m_mcMappingMinHits) != STATUS_CODE_SUCCESS)
+    {
+        m_mcMappingMinHits = 20;
+    }
+    if (XmlHelper::ReadValue(xmlHandle, "OutputTree", m_treeName) != STATUS_CODE_SUCCESS)
+    {
+        m_treeName = "PFOs";
+    }
+    if (XmlHelper::ReadValue(xmlHandle, "OutputFile", m_fileName) != STATUS_CODE_SUCCESS) // If there is no name given, use the same name as the input file (with extension changed to .root)
     {
         EventReadingAlgorithm::ExternalEventReadingParameters *pExternalParameters(nullptr);
         pExternalParameters = dynamic_cast<EventReadingAlgorithm::ExternalEventReadingParameters*>(this->GetExternalParameters());

@@ -58,7 +58,13 @@ private:
     void GetCaloHitInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, ViewHits &viewHits);
     std::string GetFileName(const std::string& filePath);
     int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
-    void Mapper(const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, const pandora::MCParticle *const pMCParticle, const bool isShowerProduct, pandora::CaloHitList &caloHitsToMerge , lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
+    void Mapper(
+        const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, 
+        const pandora::MCParticle *const pMCParticle, 
+        const bool isShowerProduct, 
+        const int hierarchyTier, 
+        pandora::CaloHitList &caloHitsToMerge, 
+        lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
     void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView);
     void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap) const;
     void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth) const;
@@ -67,6 +73,7 @@ private:
     // Member variables here
     std::string     m_caloHitListName;          ///< Name of input calo hit list
     std::string     m_mcParticleListName;       ///< Name of input MC particle list
+    int             m_mcMappingMinHits;          ///< Minimum number of hits for a MC particle to be mapped
 
     std::string		m_treeName; 		        ///< Name of output tree
     std::string		m_fileName; 		        ///< Name of output file
