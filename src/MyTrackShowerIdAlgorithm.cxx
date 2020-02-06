@@ -179,6 +179,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
             m_mcPdgCode = bestMCParticlePdgCode;
             m_mcpMomentum = pMCParticle->GetMomentum().GetMagnitude();
+            m_mcHierarchyTier = LArMCParticleHelper::GetHierarchyTier(pMCParticle);
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
             VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
@@ -190,7 +191,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     if (bestMCParticlePdgCode)
     {
-        std::cout << "Got best matching MC Particle, mcPdgCode " << m_mcPdgCode
+        std::cout << "Got best matching MC Particle, mcPdgCode " << m_mcPdgCode << ", mcpMomentum " << m_mcpMomentum << ", mcHierarchyTier " << m_mcHierarchyTier
                   << ", nHitsShared U: " << UView.nHitsMatch << " V: " <<  VView.nHitsMatch << " W: " << WView.nHitsMatch
                   << ", nHitsBestMatchMCP U: " << UView.nHitsMcp << " V: " << VView.nHitsMcp << " W: " << WView.nHitsMcp << std::endl;
     }
@@ -292,7 +293,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
         pfosWritten += this->WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
 
-    std::cout << "Writing a PFO to the tree, pfoId " << pfoId << ", hierarchyTier " << hierarchyTier << ", parentPfoId " << parentPfoId;
+    std::cout << std::endl << "Writing a PFO to the tree, pfoId " << pfoId << ", hierarchyTier " << hierarchyTier << ", parentPfoId " << parentPfoId;
     if (daughterPfoIds.size() > 0)
     {
         std::cout << ", daughterPfoIds ";
@@ -309,7 +310,6 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     m_HierarchyTier = hierarchyTier; // Write hierarchyTier to ROOT tree
     
     // Write all other properties of pPFO to ROOT tree
-
     this->GetCaloHitInfo(pPfo, TPC_VIEW_U, m_UViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_V, m_VViewHits);
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
@@ -319,6 +319,12 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
         // This is the neutrino PFO, so retrieve the MC neutrino info
         m_mcpMomentum = m_neutrinoMcp->GetMomentum().GetMagnitude();
         m_mcPdgCode = m_neutrinoMcp->GetParticleId();
+        m_UViewHits.nHitsMatch = 0;
+        m_UViewHits.nHitsMcp = 0;    
+        m_VViewHits.nHitsMatch = 0;
+        m_VViewHits.nHitsMcp = 0;
+        m_WViewHits.nHitsMatch = 0;
+        m_WViewHits.nHitsMcp = 0;
     }
     else
     {
@@ -482,6 +488,7 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     m_pPfoTree->Branch("mcNuanceCode", &m_mcNuanceCode);
     m_pPfoTree->Branch("mcPdgCode", &m_mcPdgCode);
     m_pPfoTree->Branch("mcpMomentum", &m_mcpMomentum);
+    m_pPfoTree->Branch("mcHierarchyTier", &m_mcHierarchyTier);
 
     // U view
     m_pPfoTree->Branch("driftCoordU", &(m_UViewHits.pXCoord));

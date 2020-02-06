@@ -98,6 +98,7 @@ private:
     int                 m_mcNuanceCode;     ///< Interaction type
     int					m_mcPdgCode;		///< truth particle for this PFO
     float               m_mcpMomentum;      ///< truth particle momentum
+    int                 m_mcHierarchyTier;  ///< truth particle hierarchy tier
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------
