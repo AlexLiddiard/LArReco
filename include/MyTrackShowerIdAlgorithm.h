@@ -66,8 +66,8 @@ private:
         pandora::CaloHitList &caloHitsToMerge, 
         lar_content::LArMCParticleHelper::MCContributionMap &selectiveMap);
     void GetBestMatchedMCParticleInfo(const pandora::ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView);
-    void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap) const;
-    void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth) const;
+    void PrintMCParticles(const lar_content::LArMCParticleHelper::MCContributionMap &mcContributionMap, const int minHits = 1) const;
+    void PrintMCParticle(const pandora::MCParticle *const pMCParticle, const lar_content::LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap, const int depth = 0, const int minHits = 1, bool printDaughters = true) const;
     void GetPfoToHitsMap(const pandora::PfoList &pPfoList, lar_content::LArMCParticleHelper::PfoContributionMap &pfoToHitsMap);
 
     // Member variables here

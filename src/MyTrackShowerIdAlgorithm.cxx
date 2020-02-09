@@ -50,21 +50,33 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     MCParticleList incidentMClist;
     this->GetIncidentMCPs(pMCParticleList, incidentMClist);
     std::cout << "Found " << incidentMClist.size() << " incident MC particles." << std::endl;
-    if (incidentMClist.size()) // Check that there is a MC parent neutrino
+    std::cout << "\nBegin generating MCParticle->CaloHit map." << std::endl;
+    float incidentMcEnergy = 0;
+    for (const MCParticle *const pMCParticle : incidentMClist) 
     {
-        // Set the MC incident particle and interaction type for this event
-        m_incidentMcp = incidentMClist.front();
+        const float mcEnergy = pMCParticle->GetEnergy();
+        if (mcEnergy > incidentMcEnergy)
+        {
+            // Set this as the MC main incident particle, and determine the interaction type
+            m_incidentMcp = pMCParticle;
+            m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_incidentMcp);
+            incidentMcEnergy = mcEnergy;
+        }
         m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_incidentMcp);
-        std::cout << "Event nuance code: " << m_mcNuanceCode << std::endl;
         // Map the MC particles
-        std::cout << "\nGenerating MCParticle->CaloHit map..." << std::endl;
+        std::cout << "Mapping incident MC particle: ";
+        PrintMCParticle(pMCParticle, basicMCParticleToHitsMap, 0, 0, false);
         CaloHitList rejectedCaloHitList;
         this->Mapper(basicMCParticleToHitsMap, m_incidentMcp, false, 0, rejectedCaloHitList, m_selectiveMap);
-        std::cout << "Mapping complete, results:" << std::endl;
-        this->PrintMCParticles(m_selectiveMap);
     }
+    std::cout << std::endl << "Event nuance code: " << m_mcNuanceCode << std::endl;
+    std::cout << "Main incident MC particle: ";
+    PrintMCParticle(m_incidentMcp, basicMCParticleToHitsMap, 0, 0, false);
+    std::cout << "MCParticle->CaloHit map:" << std::endl;
+    PrintMCParticles(m_selectiveMap, 1);
 
     // Create hit sharing map
+    std::cout << "\nGenerating PFO<->MCP hit sharing map." << std::endl;
     LArMCParticleHelper::MCParticleToPfoHitSharingMap mcToPfoHitSharingMap;
     LArMCParticleHelper::GetPfoMCParticleHitSharingMaps(pfoToHitsMap, {m_selectiveMap}, m_pfoToMCHitSharingMap, mcToPfoHitSharingMap);
 
@@ -197,7 +209,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 }
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCContributionMap &mcContributionMap) const
+void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCContributionMap &mcContributionMap, const int minHits) const
 {
     MCParticleVector mcPrimaryVector;
     LArMonitoringHelper::GetOrderedMCParticleVector({mcContributionMap}, mcPrimaryVector);
@@ -208,7 +220,7 @@ void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCCon
     {
         const CaloHitList &caloHitList(mcContributionMap.at(pMCPrimary));
 
-        if (caloHitList.size() >= 1)
+        if (caloHitList.size() >= minHits)
         {
             std::cout << std::endl << "--Primary " << index << ", MCPDG " << pMCPrimary->GetParticleId() << ", Energy " << pMCPrimary->GetEnergy()
                       << ", Dist. " << (pMCPrimary->GetEndpoint() - pMCPrimary->GetVertex()).GetMagnitude() << ", nMCHits " << caloHitList.size()
@@ -220,19 +232,20 @@ void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCCon
             LArMCParticleHelper::CaloHitToMCMap caloHitToPrimaryMCMap;
             LArMCParticleHelper::MCContributionMap mcToTrueHitListMap;
             LArMCParticleHelper::GetMCParticleToCaloHitMatches(&caloHitList, mcToPrimaryMCMap, caloHitToPrimaryMCMap, mcToTrueHitListMap);
-            this->PrintMCParticle(pMCPrimary, mcToTrueHitListMap, 1);
+            this->PrintMCParticle(pMCPrimary, mcToTrueHitListMap, 1, minHits);
         }
 
         ++index;
     }
 }
+
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MyTrackShowerIdAlgorithm::PrintMCParticle(const MCParticle *const pMCParticle, const LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap,
-    const int depth) const
+    const int depth, const int minHits, const bool printDaughters) const
 {
     const CaloHitList &caloHitList(mcToTrueHitListMap.count(pMCParticle) ? mcToTrueHitListMap.at(pMCParticle) : CaloHitList());
 
-    if (caloHitList.size() >= 1)
+    if (caloHitList.size() >= minHits)
     {
         if (depth > 1)
         {
@@ -246,10 +259,13 @@ void MyTrackShowerIdAlgorithm::PrintMCParticle(const MCParticle *const pMCPartic
                   << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, caloHitList)
                   << ", " << LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, caloHitList) << ")" << std::endl;
     }
-
-    for (const MCParticle *const pDaughterParticle : pMCParticle->GetDaughterList())
-        this->PrintMCParticle(pDaughterParticle, mcToTrueHitListMap, depth + 1);
+    if (printDaughters)
+    {
+        for (const MCParticle *const pDaughterParticle : pMCParticle->GetDaughterList())
+            this->PrintMCParticle(pDaughterParticle, mcToTrueHitListMap, depth + 1);
+    }
 }
+
 //-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 /*
 Inputs:
