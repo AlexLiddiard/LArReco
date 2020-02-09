@@ -57,7 +57,7 @@ private:
     int WritePfo(const pandora::ParticleFlowObject *const pPfo, const int pfoId = 0, const int parentPfoId = -1, const int hierarchyTier = 0);
     void GetCaloHitInfo(const pandora::ParticleFlowObject *const pPfo, pandora::HitType hitType, ViewHits &viewHits);
     std::string GetFileName(const std::string& filePath);
-    int GetParentNeutrino(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
+    void GetIncidentMCPs(const pandora::MCParticleList *const pMCParticleList, pandora::MCParticleList &parentMCNuList);
     void Mapper(
         const lar_content::LArMCParticleHelper::MCContributionMap &basicMap, 
         const pandora::MCParticle *const pMCParticle, 
@@ -82,7 +82,7 @@ private:
 
     lar_content::LArMCParticleHelper::MCContributionMap m_selectiveMap;                            ///< Bespoke mapping of MCParticles to associated Calohits
     lar_content::LArMCParticleHelper::PfoToMCParticleHitSharingMap m_pfoToMCHitSharingMap;         ///< Mapping from PFOs to associated MCParticles and their shared hits
-    const pandora::MCParticle *m_neutrinoMcp;
+    const pandora::MCParticle *m_incidentMcp;
 
     // PFO tree variables
     int					m_EventId;		    ///< Current event id
