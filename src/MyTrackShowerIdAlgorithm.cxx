@@ -156,7 +156,10 @@ void MyTrackShowerIdAlgorithm::Mapper(
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
     // With the exception of neutrino primaries, an MC particle is mapped only if it has enough hits and is not a shower product.
     const int nCalohits = returnedCaloHits.size() + mCPCaloHits.size();
-    if ((hierarchyTier == 1 && LArMCParticleHelper::IsNeutrino(m_incidentMcp) && nCalohits > 0 ) || (!isShowerProduct && nCalohits > m_mcMappingMinHits))
+    if (
+        (hierarchyTier == 1 && nCalohits > 0 && LArMCParticleHelper::IsNeutrino(pMCParticle->GetParentList().front())) || 
+        (!isShowerProduct && nCalohits > m_mcMappingMinHits)
+    )
     {
         // Add this MCParticle and its hits to the map (instead of adding to a list of hits to be merged)
         caloHits_back_inserter = std::back_inserter(selectiveMap[pMCParticle]);
@@ -332,7 +335,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     {
         this->GetBestMatchedMCParticleInfo(pPfo, m_UViewHits, m_VViewHits, m_WViewHits);
         if (m_mcPdgCode) {
-            std::cout << "Got best matching MC Particle, mcPdgCode " << m_mcPdgCode << ", mcpMomentum " << m_mcpMomentum << ", mcHierarchyTier " << m_mcHierarchyTier << std::endl;
+            std::cout << "Got best matching MC Particle: mcPdgCode " << m_mcPdgCode << ", mcpMomentum " << m_mcpMomentum << ", mcHierarchyTier " << m_mcHierarchyTier << std::endl;
         }
         else
         {
