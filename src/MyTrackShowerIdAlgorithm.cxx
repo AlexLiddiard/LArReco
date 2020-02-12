@@ -91,10 +91,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     else
     {
         std::cout << "The event has no reconstructed neutrinos! We're going for single-particle mode!" << std::endl;
-
-	// TODO Either randomise a copy of input pfo list and take first, or be able to loop over all (1 for electrons, 2 for pi0)
-	unsigned int particleCounter(0);	
-
+	unsigned int particleCounter(0);
 	for (const Pfo *const pSingleParticlePfo : *pPfoList)
 	{
             this->WritePfo(pSingleParticlePfo, particleCounter++);
@@ -139,7 +136,7 @@ void MyTrackShowerIdAlgorithm::Mapper(
     const LArMCParticleHelper::MCContributionMap &basicMap, 
     const MCParticle *const pMCParticle, 
     const bool isShowerProduct, 
-    const int hierarchyTier,
+    const unsigned int hierarchyTier,
     CaloHitList &caloHitsToMerge, 
     LArMCParticleHelper::MCContributionMap &selectiveMap)
 {
@@ -163,7 +160,7 @@ void MyTrackShowerIdAlgorithm::Mapper(
 
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
     // MC particle is mapped only if it has enough hits and is not a shower product. Exceptions are made for neutrino primaries and non-neutrino incident particles.
-    const int nCalohits = returnedCaloHits.size() + mCPCaloHits.size();
+    const unsigned int nCalohits = returnedCaloHits.size() + mCPCaloHits.size();
     if (
         (hierarchyTier == 0 && nCalohits > 0 && !LArMCParticleHelper::IsNeutrino(pMCParticle)) || 
         (hierarchyTier == 1 && nCalohits > 0 && LArMCParticleHelper::IsNeutrino(pMCParticle->GetParentList().front())) || 
@@ -183,7 +180,7 @@ void MyTrackShowerIdAlgorithm::Mapper(
 void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowObject *const pPfo, ViewHits &UView, ViewHits &VView, ViewHits &WView)
 {
     int bestMCParticlePdgCode(0);
-    int nHitsSharedWithBestMCParticleTotal(0);
+    unsigned int nHitsSharedWithBestMCParticleTotal(0);
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));
 
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
@@ -221,7 +218,7 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 }
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
-void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCContributionMap &mcContributionMap, const int minHits) const
+void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCContributionMap &mcContributionMap, const unsigned int minHits) const
 {
     MCParticleVector mcPrimaryVector;
     LArMonitoringHelper::GetOrderedMCParticleVector({mcContributionMap}, mcPrimaryVector);
@@ -253,7 +250,7 @@ void MyTrackShowerIdAlgorithm::PrintMCParticles(const LArMCParticleHelper::MCCon
 
 //Copied from MCParticle Monitoring Algorithm----------------------------------------------------------------------------------------------------------------------------------------------------------------
 void MyTrackShowerIdAlgorithm::PrintMCParticle(const MCParticle *const pMCParticle, const LArMCParticleHelper::MCContributionMap &mcToTrueHitListMap,
-    const int depth, const int minHits, const bool printDaughters) const
+    const unsigned int depth, const unsigned int minHits, const bool printDaughters) const
 {
     const CaloHitList &caloHitList(mcToTrueHitListMap.count(pMCParticle) ? mcToTrueHitListMap.at(pMCParticle) : CaloHitList());
 
@@ -294,14 +291,14 @@ Returns:
 int: the total number of PFOs written, i.e. returns the value n + 1.
 */
 
-int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,const int pfoId, const int parentPfoId, const int hierarchyTier)
+unsigned int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,const unsigned int pfoId, const int parentPfoId, const unsigned int hierarchyTier)
 {
     IntVector daughterPfoIds;	// daughterPfoIds = [empty vector of integers].
-    int pfosWritten(0);		// pfosWritten = 0.
+    unsigned int pfosWritten(0);		// pfosWritten = 0.
 
     for (const ParticleFlowObject *const daughterPfo : pPfo->GetDaughterPfoList()) // for each daughterPfo in pPfo.daughterPfos:
     {
-        int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
+        unsigned int daughterPfoId(pfoId + pfosWritten + 1); // daughterPfoId = pfoId + pfosWritten + 1
         daughterPfoIds.push_back(daughterPfoId); // put daughterPfoId into daughterPfoIds
         pfosWritten += this->WritePfo(daughterPfo, daughterPfoId, pfoId, hierarchyTier + 1); // pfosWritten += WritePfo(daughterPfoId, pfoId, daughterPfo)
     }
@@ -310,7 +307,7 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     if (daughterPfoIds.size() > 0)
     {
         std::cout << ", daughterPfoIds ";
-        for (int daughterPfoId : daughterPfoIds)
+        for (unsigned int daughterPfoId : daughterPfoIds)
         {
             std::cout << daughterPfoId << " ";
         }
