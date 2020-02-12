@@ -328,9 +328,9 @@ int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const pPfo ,con
     this->GetCaloHitInfo(pPfo, TPC_VIEW_W, m_WViewHits);
     this->GetCaloHitInfo(pPfo, TPC_3D, m_ThreeDViewHits);
     std::cout << "Got calohits from U,V,W,3D views." << std::endl;
-    if (pfoId == 0)
+    if (m_UViewHits.pXCoord->size() + m_VViewHits.pXCoord->size() + m_WViewHits.pXCoord->size() == 0)
     {
-        // This is the incident (neutrino) PFO, so retrieve the incident MCP info
+        // The PFO contains no calohits, so this is a reconstructed neutrino PFO. We retrieve the neutrino MCP info.
         m_mcpMomentum = m_incidentMcp->GetMomentum().GetMagnitude();
         m_mcPdgCode = m_incidentMcp->GetParticleId();
         m_UViewHits.nHitsMatch = 0;
@@ -403,16 +403,6 @@ void MyTrackShowerIdAlgorithm::GetCaloHitInfo(
         viewHits.pZCoord->push_back(positionVector.GetZ());
         viewHits.pEnergy->push_back(caloHit->GetInputEnergy());
         viewHits.pXCoordError->push_back(caloHit->GetCellSize1());
-    }
-
-    std::string s;
-    switch (hitType)
-    {
-        case TPC_VIEW_U: s = "U"; break;
-        case TPC_VIEW_V: s = "V"; break;
-        case TPC_VIEW_W: s = "W"; break;
-        case TPC_3D: s = "3D"; break;
-        default: s = ""; break;
     }
 }
 
