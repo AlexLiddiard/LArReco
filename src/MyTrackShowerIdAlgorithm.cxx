@@ -90,7 +90,15 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     }
     else
     {
-        std::cout << "The event has no reconstructed neutrinos!" << std::endl;
+        std::cout << "The event has no reconstructed neutrinos! We're going for single-particle mode!" << std::endl;
+
+	// TODO Either randomise a copy of input pfo list and take first, or be able to loop over all (1 for electrons, 2 for pi0)
+	unsigned int particleCounter(0);	
+
+	for (const Pfo *const pSingleParticlePfo : *pPfoList)
+	{
+            this->WritePfo(pSingleParticlePfo, particleCounter++);
+	}
     }
 
     m_EventId++;
