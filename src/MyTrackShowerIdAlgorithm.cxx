@@ -162,9 +162,10 @@ void MyTrackShowerIdAlgorithm::Mapper(
     }
 
     std::back_insert_iterator<CaloHitList> caloHits_back_inserter = std::back_inserter(caloHitsToMerge);
-    // With the exception of neutrino primaries, an MC particle is mapped only if it has enough hits and is not a shower product.
+    // MC particle is mapped only if it has enough hits and is not a shower product. Exceptions are made for neutrino primaries and non-neutrino incident particles.
     const int nCalohits = returnedCaloHits.size() + mCPCaloHits.size();
     if (
+        (hierarchyTier == 0 && nCalohits > 0 && !LArMCParticleHelper::IsNeutrino(pMCParticle)) || 
         (hierarchyTier == 1 && nCalohits > 0 && LArMCParticleHelper::IsNeutrino(pMCParticle->GetParentList().front())) || 
         (!isShowerProduct && nCalohits > m_mcMappingMinHits)
     )
