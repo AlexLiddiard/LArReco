@@ -24,10 +24,12 @@
         <CurrentCaloHitListReplacement>CRCaloHitList2D</CurrentCaloHitListReplacement>
     </algorithm>
 
+<!--
     <algorithm type = "LArVisualMonitoring">
         <CaloHitListNames>CRCaloHitListW CRCaloHitListU CRCaloHitListV</CaloHitListNames>
         <ShowDetector>true</ShowDetector>
     </algorithm>
+-->
 
     <!-- 2D cosmic-ray muon reconstruction, U View -->
     <algorithm type = "LArClusteringParent">
@@ -229,17 +231,27 @@
         <OutputFile>Validation.root</OutputFile>
     </algorithm>
 
+<!--
+    <algorithm type = "LArMCParticleMonitoring">
+        <CaloHitListName>CRCaloHitList2D</CaloHitListName>
+        <MCParticleListName>Input</MCParticleListName>
+        <MinHitsForDisplay>0</MinHitsForDisplay>
+    </algorithm>
+-->
+
     <algorithm type = "MyTrackShowerIdAlgorithm">
         <OutputTree>PFOs</OutputTree>
         <CaloHitListName>CRCaloHitList2D</CaloHitListName>
         <MCParticleListName>Input</MCParticleListName>
-        <MCMappingMinHits>1</MCMappingMinHits>
+        <PfoListName>OutputParticles3D</PfoListName>
+        <MCMappingMinHits>100000</MCMappingMinHits> <!-- large number ensures everything is folded back to the neutrino primaries (or the incident particles for other event types). -->
     </algorithm>
-
+<!--
     <algorithm type = "LArVisualMonitoring">
         <PfoListNames>OutputParticles3D</PfoListNames>
     </algorithm>
     <algorithm type = "LArVisualMonitoring">
         <ClusterListNames>CRClusters3D NClusters3D</ClusterListNames>
     </algorithm>
+-->
 </pandora>

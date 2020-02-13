@@ -27,15 +27,20 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     m_selectiveMap.clear();
     m_pfoToMCHitSharingMap.clear();
 
-    const PfoList *pPfoList(nullptr);
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pPfoList));
-
     // Input lists
+    const PfoList *pInputPfoList(nullptr);
+    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_pfoListName, pInputPfoList));
     const MCParticleList *pMCParticleList = nullptr;
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_mcParticleListName, pMCParticleList));
-
     const CaloHitList *pCaloHitList = nullptr;
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
+    
+    // Get full PFO list
+    PfoList fullPfoList;
+    for (const Pfo *const pPfo : *pInputPfoList)
+	{
+        LArPfoHelper::GetAllConnectedPfos(pPfo, fullPfoList);
+	}
 
     // Mapping target MCParticles -> truth associated Hits
     LArMCParticleHelper::MCContributionMap basicMCParticleToHitsMap;
@@ -44,7 +49,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
 
     // Mapping PFOs -> reconstructed calohit lists
     LArMCParticleHelper::PfoContributionMap pfoToHitsMap;
-    this->GetPfoToHitsMap(*pPfoList, pfoToHitsMap);
+    this->GetPfoToHitsMap(fullPfoList, pfoToHitsMap);
 
     // Get Neutrino MCParticle
     MCParticleList incidentMClist;
@@ -82,7 +87,7 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
 
     // Get Neutrino PFO
     PfoList neutrinoPfos;
-    LArPfoHelper::GetRecoNeutrinos(pPfoList, neutrinoPfos);
+    LArPfoHelper::GetRecoNeutrinos(&fullPfoList, neutrinoPfos);
     if (neutrinoPfos.size()) // Write this event if there is a neutrino PFO
     {
         std::cout << "\nBegin collecting PFO data..." << std::endl;
@@ -91,11 +96,11 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
     else
     {
         std::cout << "The event has no reconstructed neutrinos! We're going for single-particle mode!" << std::endl;
-	unsigned int particleCounter(0);
-	for (const Pfo *const pSingleParticlePfo : *pPfoList)
-	{
-            this->WritePfo(pSingleParticlePfo, particleCounter++);
-	}
+	    unsigned int particleCounter(0);
+	    for (const Pfo *const pSingleParticlePfo : fullPfoList)
+	    {
+           this->WritePfo(pSingleParticlePfo, particleCounter++);
+	    }
     }
 
     m_EventId++;
@@ -468,6 +473,10 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     if (XmlHelper::ReadValue(xmlHandle, "MCParticleListName", m_mcParticleListName) != STATUS_CODE_SUCCESS)
     {
         m_mcParticleListName = "Input";
+    }
+    if (XmlHelper::ReadValue(xmlHandle, "PfoListName", m_pfoListName) != STATUS_CODE_SUCCESS)
+    {
+        m_pfoListName = "CurrentPfos";
     }
     if (XmlHelper::ReadValue(xmlHandle, "MCMappingMinHits", m_mcMappingMinHits) != STATUS_CODE_SUCCESS)
     {
