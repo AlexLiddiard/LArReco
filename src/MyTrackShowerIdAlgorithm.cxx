@@ -213,6 +213,9 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
 
     if (!bestMCParticlePdgCode)
     {
+        m_mcPdgCode = 0;
+        m_mcpMomentum = 0;
+        m_mcHierarchyTier = 0;
         UView.nHitsMatch = 0;
         UView.nHitsMcp = 0;    
         VView.nHitsMatch = 0;
