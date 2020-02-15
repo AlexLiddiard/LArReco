@@ -29,10 +29,16 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
 
     // Input lists
     const PfoList *pInputPfoList(nullptr);
-    PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_pfoListName, pInputPfoList));
-    const MCParticleList *pMCParticleList = nullptr;
+    if (!m_pfoListName.empty()){
+        PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_pfoListName, pInputPfoList));
+    }
+    else
+    {
+        PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetCurrentList(*this, pInputPfoList));
+    }
+    const MCParticleList *pMCParticleList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_mcParticleListName, pMCParticleList));
-    const CaloHitList *pCaloHitList = nullptr;
+    const CaloHitList *pCaloHitList(nullptr);
     PANDORA_RETURN_RESULT_IF(STATUS_CODE_SUCCESS, !=, PandoraContentApi::GetList(*this, m_caloHitListName, pCaloHitList));
     
     // Get full PFO list
@@ -479,7 +485,7 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     }
     if (XmlHelper::ReadValue(xmlHandle, "PfoListName", m_pfoListName) != STATUS_CODE_SUCCESS)
     {
-        m_pfoListName = "CurrentPfos";
+        m_pfoListName = "";
     }
     if (XmlHelper::ReadValue(xmlHandle, "MCMappingMinHits", m_mcMappingMinHits) != STATUS_CODE_SUCCESS)
     {
