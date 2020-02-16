@@ -56,10 +56,11 @@
 -->
 
     <algorithm type = "MyTrackShowerIdAlgorithm">
-        <OutputTree>PFOs</OutputTree>
+	<PfoListName>RecreatedPfos</PfoListName>
         <CaloHitListName>CaloHitList2D</CaloHitListName>
         <MCParticleListName>Input</MCParticleListName>
         <MCMappingMinHits>20</MCMappingMinHits>
+	<OutputTree>PFOs</OutputTree>
     </algorithm>
 
 <!--
