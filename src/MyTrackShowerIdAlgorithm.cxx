@@ -73,12 +73,11 @@ StatusCode MyTrackShowerIdAlgorithm::Run()
             m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_incidentMcp);
             incidentMcEnergy = mcEnergy;
         }
-        m_mcNuanceCode = LArMCParticleHelper::GetNuanceCode(m_incidentMcp);
         // Map the MC particles
         std::cout << "Mapping incident MC particle: ";
         PrintMCParticle(pMCParticle, basicMCParticleToHitsMap, 0, 0, false);
         CaloHitList rejectedCaloHitList;
-        this->Mapper(basicMCParticleToHitsMap, m_incidentMcp, false, 0, rejectedCaloHitList, m_selectiveMap);
+        this->Mapper(basicMCParticleToHitsMap, pMCParticle, false, 0, rejectedCaloHitList, m_selectiveMap);
     }
     std::cout << std::endl << "Event nuance code: " << m_mcNuanceCode << std::endl;
     std::cout << "Main incident MC particle: ";
