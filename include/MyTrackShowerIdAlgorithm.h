@@ -86,20 +86,22 @@ private:
     const pandora::MCParticle *m_incidentMcp;
 
     // PFO tree variables
-    unsigned int        m_EventId;          ///< Current event id
-    unsigned int        m_HierarchyTier;    ///< PFO hierarchy tier
-    unsigned int        m_PfoId;            ///< Current PFO id
-    int                 m_ParentPfoId;      ///< Parent PFO id
-    pandora::IntVector  *m_pDaughterPfoIds; ///< Daughter PFO ids
-    float               m_Vertex[3];        ///< PFO interaction vertex
-    ViewHits            m_UViewHits;        ///< U view calo hits
-    ViewHits            m_VViewHits;        ///< V view calo hits
-    ViewHits            m_WViewHits;        ///< W view calo hits
-    ViewHits            m_ThreeDViewHits;   ///< 3D view calo hits
-    unsigned int        m_mcNuanceCode;     ///< Interaction type
-    int                 m_mcPdgCode;        ///< truth particle for this PFO
-    float               m_mcpMomentum;      ///< truth particle momentum
-    unsigned int        m_mcHierarchyTier;  ///< truth particle hierarchy tier
+    unsigned int        m_EventId;              ///< Current event id
+    unsigned int        m_HierarchyTier;        ///< PFO hierarchy tier
+    unsigned int        m_PfoId;                ///< Current PFO id
+    int                 m_ParentPfoId;          ///< Parent PFO id
+    pandora::IntVector  *m_pDaughterPfoIds;     ///< Daughter PFO ids
+    float               m_Vertex[3];            ///< PFO interaction vertex
+    ViewHits            m_UViewHits;            ///< U view calo hits
+    ViewHits            m_VViewHits;            ///< V view calo hits
+    ViewHits            m_WViewHits;            ///< W view calo hits
+    ViewHits            m_ThreeDViewHits;       ///< 3D view calo hits
+    unsigned int        m_mcNuanceCode;         ///< Interaction type
+    int                 m_mcPdgCode;            ///< truth particle for this PFO
+    float               m_mcpMomentum;          ///< truth particle momentum
+    unsigned int        m_mcHierarchyTier;      ///< truth particle hierarchy tier
+    int                 m_mcParentPdgCode;      ///< truth parent particle for this PFO
+    pandora::IntVector  *m_pMcDaughterPdgCodes; ///< truth daughter particles for this PFO
 };
 
 //------------------------------------------------------------------------------------------------------------------------------------------

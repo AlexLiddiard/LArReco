@@ -193,6 +193,19 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
     unsigned int nHitsSharedWithBestMCParticleTotal(0);
     const LArMCParticleHelper::MCParticleToSharedHitsVector &mcParticleToSharedHitsVector(m_pfoToMCHitSharingMap.at(pPfo));
 
+    // Clear all MC variables
+    m_mcPdgCode = 0;
+    m_mcpMomentum = 0;
+    m_mcHierarchyTier = 0;
+    m_mcParentPdgCode = 0;
+    m_pMcDaughterPdgCodes->clear();
+    UView.nHitsMatch = 0;
+    UView.nHitsMcp = 0;    
+    VView.nHitsMatch = 0;
+    VView.nHitsMcp = 0;
+    WView.nHitsMatch = 0;
+    WView.nHitsMcp = 0;
+
     for (const LArMCParticleHelper::MCParticleCaloHitListPair pMCParticleCaloHitListPair : mcParticleToSharedHitsVector)
     {
         const MCParticle *const pMCParticle(pMCParticleCaloHitListPair.first);
@@ -207,6 +220,19 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
             m_mcPdgCode = bestMCParticlePdgCode;
             m_mcpMomentum = pMCParticle->GetMomentum().GetMagnitude();
             m_mcHierarchyTier = LArMCParticleHelper::GetHierarchyTier(pMCParticle);
+
+            m_mcParentPdgCode = 0;
+            m_pMcDaughterPdgCodes->clear();
+            const MCParticleList parentMCParticles(pMCParticle->GetParentList());
+            if (parentMCParticles.size() == 1)
+            {
+                m_mcParentPdgCode = parentMCParticles.front()->GetParticleId();
+            }
+            for (const MCParticle *const pMCDaughter : pMCParticle->GetDaughterList())
+            {
+                m_pMcDaughterPdgCodes->push_back(pMCDaughter->GetParticleId());
+            }
+
             UView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, associatedMCHits);
             UView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_U, allMCHits);
             VView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_V, associatedMCHits);
@@ -214,19 +240,6 @@ void MyTrackShowerIdAlgorithm::GetBestMatchedMCParticleInfo(const ParticleFlowOb
             WView.nHitsMatch = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, associatedMCHits);
             WView.nHitsMcp = LArMonitoringHelper::CountHitsByType(TPC_VIEW_W, allMCHits);
         }
-    }
-
-    if (!bestMCParticlePdgCode)
-    {
-        m_mcPdgCode = 0;
-        m_mcpMomentum = 0;
-        m_mcHierarchyTier = 0;
-        UView.nHitsMatch = 0;
-        UView.nHitsMcp = 0;    
-        VView.nHitsMatch = 0;
-        VView.nHitsMcp = 0;
-        WView.nHitsMatch = 0;
-        WView.nHitsMcp = 0;
     }
 }
 
@@ -429,7 +442,8 @@ MyTrackShowerIdAlgorithm::MyTrackShowerIdAlgorithm() :
     m_UViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
     m_VViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
     m_WViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
-    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0}
+    m_ThreeDViewHits{new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),new FloatVector(),0,0,0},
+    m_pMcDaughterPdgCodes()
 {
 }
 
@@ -467,6 +481,7 @@ MyTrackShowerIdAlgorithm::~MyTrackShowerIdAlgorithm()
     delete m_WViewHits.pZCoord;
     delete m_WViewHits.pEnergy;
     delete m_WViewHits.pXCoordError;
+    delete m_pMcDaughterPdgCodes;
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
@@ -517,6 +532,8 @@ StatusCode MyTrackShowerIdAlgorithm::ReadSettings(const TiXmlHandle xmlHandle)
     // Simulation info
     m_pPfoTree->Branch("mcNuanceCode", &m_mcNuanceCode);
     m_pPfoTree->Branch("mcPdgCode", &m_mcPdgCode);
+    m_pPfoTree->Branch("mcParentPdgCode", &m_mcParentPdgCode);
+    m_pPfoTree->Branch("mcDaughterPdgCodes", &m_pMcDaughterPdgCodes);
     m_pPfoTree->Branch("mcpMomentum", &m_mcpMomentum);
     m_pPfoTree->Branch("mcHierarchyTier", &m_mcHierarchyTier);
 
