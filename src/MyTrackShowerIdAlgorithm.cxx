@@ -356,6 +356,11 @@ unsigned int MyTrackShowerIdAlgorithm::WritePfo(const ParticleFlowObject *const 
         // The PFO contains no calohits, so this is a reconstructed neutrino PFO. We retrieve the neutrino MCP info.
         m_mcpMomentum = m_incidentMcp->GetMomentum().GetMagnitude();
         m_mcPdgCode = m_incidentMcp->GetParticleId();
+        m_mcParentPdgCode = 0;
+        for (const MCParticle *const pMCDaughter : m_incidentMcp->GetDaughterList())
+        {
+            m_pMcDaughterPdgCodes->push_back(pMCDaughter->GetParticleId());
+        }
         m_UViewHits.nHitsMatch = 0;
         m_UViewHits.nHitsMcp = 0;    
         m_VViewHits.nHitsMatch = 0;
