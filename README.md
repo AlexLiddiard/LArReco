@@ -8,6 +8,8 @@ LArReco is distributed under the [GPLv3 License](http://www.gnu.org/licenses/gpl
 
 [![License](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
+Note in src/MyTrackShowerIdAlgorithm.cxx there is a modified mapper function which introduces a modified mapper function. Downstream particles have a minimum hit requirement for reconstruction, if this is not met, the hits are folded into the parent pfo.
+
 ## License and Copyright
 Copyright (C), LArReco Authors
 
