@@ -9,6 +9,7 @@ LArReco is distributed under the [GPLv3 License](http://www.gnu.org/licenses/gpl
 [![License](https://www.gnu.org/graphics/gplv3-127x51.png)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 
 Note src/MyTrackShowerIdAlgorithm.cxx is our code for saving PFOs to ROOT files. It contains a modified mapper function by which downstream particles have a minimum hit requirement for reconstruction, if this is not met, the hits are folded into the parent pfo.
+Also our settings are in the /mysettings folder.
 
 ## License and Copyright
 Copyright (C), LArReco Authors
